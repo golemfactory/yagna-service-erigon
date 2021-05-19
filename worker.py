@@ -1,6 +1,7 @@
 from yapapi import WorkContext
 import json
 
+
 def parse_result(raw_data):
     command_executed = raw_data[0]
     msg = command_executed.message
@@ -15,7 +16,8 @@ async def deploy(ctx, erigon):
     deployment_fut = await erigon.queue.get()
 
     #   NOTE: this is not necessary, but without any ctx.run() it seems that
-    #   ctx.commit() does nothing and we would deploy only when first request for status
+    #   ctx.commit() does nothing and we would deploy only when first status
+    #   request comes
     ctx.run('STATUS')
     yield
     deployment_fut.set_result({'status': 'DEPLOYED'})

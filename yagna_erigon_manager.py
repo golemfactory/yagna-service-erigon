@@ -51,15 +51,10 @@ class YagnaErigonManager():
 
         erigon = Erigon()
         self.tasks_queue.put_nowait(erigon)
-
-        print("START")
         await erigon.start()
-        print("STARTED")
-
         return erigon
 
     async def close(self):
-        print("CLOSING")
         self.closing = True
         await self.executor_task
 
@@ -82,6 +77,7 @@ class YagnaErigonManager():
                 while True:
                     if self.closing:
                         break
+
                     if self.tasks_queue.empty():
                         await asyncio.sleep(0.1)
                     else:
