@@ -14,35 +14,62 @@ STATUS_MSG = {
 SUBNET_TAG = 'ttt'
 
 
+class Erigon():
+    def __init__(self):
+        self.id = self._create_id()
+        self.queue = asyncio.Queue()
+
+    async def start(self):
+        fut = asyncio.get_running_loop().create_future()
+        await self.queue.put(fut)
+        await fut
+
+        if fut.result() != {'status': 'DEPLOYED'}:
+            raise Exception(f'Failed to start Erigon: {fut.result()}')
+
+        #   TODO: fut.result() is the only place we might access the message
+        #         returned by Runtime.deploy() - but do we want it?
+
+    async def status(self):
+        return self.run('STATUS')
+
+    async def stop(self):
+        return self.run('STOP')
+
+    async def run(self, cmd):
+        fut = asyncio.get_running_loop().create_future()
+        self.queue.put_nowait((cmd, fut))
+        await fut
+        return fut.result()
+
+    def _create_id(self):
+        return uuid4().hex
+
+
 class YagnaErigonManager():
     def __init__(self):
         enable_default_logger(log_file='log.log')
         self.executor_task = None
-        self.id = self._create_id()
-        self.queue = asyncio.Queue()
+        self.tasks_queue = asyncio.Queue()
+        self.closing = False
 
-    async def close(self):
-        if self.executor_task is not None:
-            await self.executor_task
-            self.executor_task = None
+    async def deploy_erigon(self):
 
-    async def deploy(self):
         if self.executor_task is None:
             self.executor_task = asyncio.create_task(self._create_executor())
 
-        fut = asyncio.get_running_loop().create_future()
-        self.queue.put_nowait(fut)
+        erigon = Erigon()
+        self.tasks_queue.put_nowait(erigon)
 
-        await fut
+        print("START")
+        await erigon.start()
+        print("STARTED")
 
-        if fut.result() != {'status': 'DEPLOYED'}:
-            raise Exception(f'Failed to start provider: {fut.result()}')
+        return erigon
 
-        return {
-            'deploy_msg': {'valid': 1},
-            'start_msg': None,
-            'status_msg': STATUS_MSG,
-        }
+    async def close(self):
+        self.closing = True
+        await self.executor_task
 
     async def _create_executor(self):
         async with Executor(
@@ -59,21 +86,13 @@ class YagnaErigonManager():
                 f"and network: {executor.network}\n"
             )
 
-            task = Task(data={'queue': self.queue})
-            async for _ in executor.submit(worker, [task]):
+            async def tasks():
+                while True:
+                    if self.closing:
+                        break
+                    erigon = await self.tasks_queue.get()
+                    task = Task(data=erigon)
+                    yield task
+
+            async for _ in executor.submit(worker, tasks()):
                 pass
-
-    async def status(self):
-        fut = asyncio.get_running_loop().create_future()
-        self.queue.put_nowait(('STATUS', fut))
-        await fut
-        return fut.result()
-
-    async def stop(self):
-        fut = asyncio.get_running_loop().create_future()
-        self.queue.put_nowait(('STOP', fut))
-        await fut
-        return fut.result()
-
-    def _create_id(self):
-        return uuid4().hex
