@@ -6,11 +6,6 @@ from yapapi import Executor, Task
 from datetime import timedelta
 from worker import worker
 
-STATUS_MSG = {
-    'status': 'running',
-    'url': 'www.example.com:868767',
-    'secret': 'THIS IS SECRET!',
-}
 SUBNET_TAG = 'ttt'
 
 
@@ -24,26 +19,23 @@ class Erigon():
         await self.queue.put(fut)
         await fut
 
-        if fut.result() != {'status': 'DEPLOYED'}:
-            raise Exception(f'Failed to start Erigon: {fut.result()}')
-
-        #   TODO: fut.result() is the only place we might access the message
-        #         returned by Runtime.deploy() - but do we want it?
-
     async def status(self):
-        return self.run('STATUS')
+        return await self.run('STATUS')
 
     async def stop(self):
-        return self.run('STOP')
+        return await self.run('STOP')
 
     async def run(self, cmd):
         fut = asyncio.get_running_loop().create_future()
-        self.queue.put_nowait((cmd, fut))
+        await self.queue.put((cmd, fut))
         await fut
         return fut.result()
 
     def _create_id(self):
         return uuid4().hex
+
+    def __repr__(self):
+        return f"{type(self).__name__}[id={self.id}]"
 
 
 class YagnaErigonManager():
@@ -54,7 +46,6 @@ class YagnaErigonManager():
         self.closing = False
 
     async def deploy_erigon(self):
-
         if self.executor_task is None:
             self.executor_task = asyncio.create_task(self._create_executor())
 
@@ -68,13 +59,14 @@ class YagnaErigonManager():
         return erigon
 
     async def close(self):
+        print("CLOSING")
         self.closing = True
         await self.executor_task
 
     async def _create_executor(self):
         async with Executor(
             payload=TurbogethPayload(),
-            max_workers=1,
+            max_workers=2,
             budget=1.0,
             timeout=timedelta(minutes=30),
             subnet_tag=SUBNET_TAG,
@@ -90,9 +82,12 @@ class YagnaErigonManager():
                 while True:
                     if self.closing:
                         break
-                    erigon = await self.tasks_queue.get()
-                    task = Task(data=erigon)
-                    yield task
+                    if self.tasks_queue.empty():
+                        await asyncio.sleep(0.1)
+                    else:
+                        erigon = self.tasks_queue.get_nowait()
+                        task = Task(data=erigon)
+                        yield task
 
-            async for _ in executor.submit(worker, tasks()):
-                pass
+            async for task in executor.submit(worker, tasks()):
+                print(f"END OF WORK FOR ERIGON {task.data}")
