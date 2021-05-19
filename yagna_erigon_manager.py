@@ -19,9 +19,11 @@ class YagnaErigonManager():
         self.id = self._create_id()
         self.queue = asyncio.Queue()
 
+        self.executor_tasks = []
+
     async def deploy(self):
         enable_default_logger(log_file='log.log')
-        asyncio.create_task(self._deployment_task())
+        deploy_task = asyncio.create_task(self._deployment_task())
 
         fut = asyncio.get_running_loop().create_future()
         self.queue.put_nowait(fut)
@@ -31,7 +33,7 @@ class YagnaErigonManager():
         if fut.result() != {'status': 'DEPLOYED'}:
             raise Exception(f'Failed to start provider: {fut.result()}')
 
-        return {
+        return deploy_task, {
             'deploy_msg': {'valid': 1},
             'start_msg': None,
             'status_msg': STATUS_MSG,
@@ -39,7 +41,7 @@ class YagnaErigonManager():
 
     async def _deployment_task(self):
         async with Executor(
-            package=TurbogethPayload(),
+            payload=TurbogethPayload(),
             max_workers=1,
             budget=1.0,
             timeout=timedelta(minutes=30),
@@ -65,6 +67,7 @@ class YagnaErigonManager():
     async def stop(self):
         fut = asyncio.get_running_loop().create_future()
         self.queue.put_nowait(('STOP', fut))
+        await fut
         return fut.result()
 
     def _create_id(self):
