@@ -16,14 +16,19 @@ SUBNET_TAG = 'ttt'
 
 class YagnaErigonManager():
     def __init__(self):
+        enable_default_logger(log_file='log.log')
+        self.executor_task = None
         self.id = self._create_id()
         self.queue = asyncio.Queue()
 
-        self.executor_tasks = []
+    async def close(self):
+        if self.executor_task is not None:
+            await self.executor_task
+            self.executor_task = None
 
     async def deploy(self):
-        enable_default_logger(log_file='log.log')
-        deploy_task = asyncio.create_task(self._deployment_task())
+        if self.executor_task is None:
+            self.executor_task = asyncio.create_task(self._create_executor())
 
         fut = asyncio.get_running_loop().create_future()
         self.queue.put_nowait(fut)
@@ -33,13 +38,13 @@ class YagnaErigonManager():
         if fut.result() != {'status': 'DEPLOYED'}:
             raise Exception(f'Failed to start provider: {fut.result()}')
 
-        return deploy_task, {
+        return {
             'deploy_msg': {'valid': 1},
             'start_msg': None,
             'status_msg': STATUS_MSG,
         }
 
-    async def _deployment_task(self):
+    async def _create_executor(self):
         async with Executor(
             payload=TurbogethPayload(),
             max_workers=1,
