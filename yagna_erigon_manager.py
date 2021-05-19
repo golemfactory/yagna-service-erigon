@@ -6,7 +6,7 @@ from yapapi import Executor, Task
 from datetime import timedelta
 from worker import worker
 
-SUBNET_TAG = 'ttt'
+SUBNET_TAG = 'devnet-beta.1'
 
 
 class Erigon():
@@ -59,9 +59,16 @@ class YagnaErigonManager():
         await self.executor_task
 
     async def _create_executor(self):
+        from yapapi.payload import vm
+        package = await vm.repo(
+            image_hash="9a3b5d67b0b27746283cb5f287c13eab1beaa12d92a9f536b747c7ae",
+            min_mem_gib=0.5,
+            min_storage_gib=2.0,
+        )
         async with Executor(
-            payload=TurbogethPayload(),
-            max_workers=2,
+            # payload=TurbogethPayload(),
+            payload=package,
+            max_workers=3,
             budget=1.0,
             timeout=timedelta(minutes=30),
             subnet_tag=SUBNET_TAG,

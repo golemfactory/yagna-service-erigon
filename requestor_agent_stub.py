@@ -2,17 +2,27 @@ from yagna_erigon_manager import YagnaErigonManager
 import asyncio
 
 
+async def print_status(erigon):
+    status = await erigon.status()
+    print(f"Erigon {erigon.id} status: {status}")
+
+
 async def main():
     yem = YagnaErigonManager()
-    erigon = await yem.deploy_erigon()
-    print(f"New Erigon deployed, id: {erigon.id}")
 
+    erigons = []
+    for _ in range(0, 3):
+        erigons.append(await yem.deploy_erigon())
+
+    tasks = []
     for i in range(3):
-        status = await erigon.status()
-        print(f"Erigon {erigon.id} status: {status}")
+        tasks += [print_status(erigon) for erigon in erigons]
 
-    stop_result = await erigon.stop()
-    print(f"Erigon {erigon.id} stopped: {stop_result}")
+    await asyncio.gather(*tasks)
+
+    for erigon in erigons:
+        stop_result = await erigon.stop()
+        print(f"Erigon {erigon.id} stopped: {stop_result}")
 
     await yem.close()
 

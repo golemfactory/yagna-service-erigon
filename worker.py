@@ -3,6 +3,7 @@ import json
 
 
 def parse_result(raw_data):
+    return raw_data
     command_executed = raw_data[0]
     msg = command_executed.message
     msg = json.loads(msg)
@@ -18,7 +19,7 @@ async def deploy(ctx, erigon):
     #   NOTE: this is not necessary, but without any ctx.run() it seems that
     #   ctx.commit() does nothing and we would deploy only when first status
     #   request comes
-    ctx.run('STATUS')
+    ctx.run('/bin/echo', "AAA")
     yield
     deployment_fut.set_result({'status': 'DEPLOYED'})
 
@@ -28,7 +29,7 @@ async def process_commands(ctx, erigon):
     while True:
         command, requesting_future = await queue.get()
         if command == 'STATUS':
-            ctx.run(command)
+            ctx.run('/bin/echo', 'STATUS')
             yield requesting_future
         elif command == 'STOP':
             requesting_future.set_result({'status': 'STOPPING'})
