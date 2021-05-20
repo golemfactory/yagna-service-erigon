@@ -2,6 +2,7 @@
 name = "erigon-runtime"
 version = "0.1.0"
 authors = ["Golem Factory <contact@golem.network>"]
+repository = "https://github.com/golemfactory/yagna-service-erigon"
 edition = "2018"
 license = "GPL-3.0"
 
@@ -14,7 +15,7 @@ anyhow = "1.0"
 futures = "0.3"
 serde = { version = "^1.0", features = ["derive"] }
 structopt = "0.3"
-tokio = { version = "0.2", features = ["io-std", "io-util", "rt-core", "rt-threaded", "macros"] }
+tokio = { version = "0.2", features = ["io-std", "io-util", "rt-core", "rt-threaded", "macros", "process", "time"] }
 
 [patch.crates-io]
 ya-runtime-sdk = { git = "https://github.com/golemfactory/ya-runtime-sdk.git", rev = "880efaf19111e71647dea23fd997ebf6edc6e3d7" }

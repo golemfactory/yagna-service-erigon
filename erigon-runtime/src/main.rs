@@ -1,37 +1,130 @@
+use futures::channel::oneshot;
 use futures::FutureExt;
-use serde::{Deserialize, Serialize};
-use structopt::StructOpt;
+use std::sync::atomic::AtomicU64;
+use std::sync::atomic::Ordering::Relaxed;
+use tokio::process::{Child, Command};
 use ya_runtime_sdk::*;
 
+const ERIGON_BIN: &str = "./tg";
+const RPCDAEMON_BIN: &str = "./rpcdaemon";
+
+const ERIGON_PARAMS: &[&str; 2] = &["--datadir", "/data/turbo-geth/datadir"];
+const RPCDAEMON_PARAMS: &[&str; 14] = &[
+    "--datadir",
+    "/data/turbo-geth/datadir",
+    "--private.api.addr",
+    "localhost:9090",
+    "--http.addr",
+    "0.0.0.0",
+    "--http.port",
+    "8545",
+    "--http.vhosts",
+    "*",
+    "--http.corsdomain",
+    "*",
+    "--http.api",
+    "eth,debug,net,trace,web3,tg",
+];
+
 #[derive(Default, RuntimeDef)]
-//#[cli(ExampleCli)]
-//#[conf(ExampleConf)]
-pub struct ErigonRuntime;
+pub struct ErigonRuntime {
+    seq: AtomicU64,
+    erigon_pid: Option<Child>,
+    rpcdaemon_pid: Option<Child>,
+}
 
 impl Runtime for ErigonRuntime {
-    const MODE: RuntimeMode = RuntimeMode::Command;
+    const MODE: RuntimeMode = RuntimeMode::Server;
 
     fn deploy<'a>(&mut self, _: &mut Context<Self>) -> OutputResponse<'a> {
-        async move { Ok("deploy".into()) }.boxed_local()
+        async move {
+            Ok(serialize::json::json!(
+                {
+                    "startMode":"blocking",
+                    "valid":{"Ok":""},
+                    "vols":[]
+                }
+            ))
+        }
+        .boxed_local()
     }
 
     fn start<'a>(&mut self, _: &mut Context<Self>) -> OutputResponse<'a> {
+        let chain_id = String::from("goerli");
+
+        let erigon_pid = Command::new(ERIGON_BIN)
+            .args(ERIGON_PARAMS)
+            .arg("--chain")
+            .arg(chain_id)
+            .spawn()
+            .expect("Erigon: Failed to spawn");
+
+        let rpcd_pid = Command::new(RPCDAEMON_BIN)
+            .args(RPCDAEMON_PARAMS)
+            .spawn()
+            .expect("RPC Daemon: Failed to spawn");
+
+        self.erigon_pid = Some(erigon_pid);
+        self.rpcdaemon_pid = Some(rpcd_pid);
+
         async move { Ok("start".into()) }.boxed_local()
     }
 
     fn stop<'a>(&mut self, _: &mut Context<Self>) -> EmptyResponse<'a> {
-        println!("stop");
+        if let Some(erigon_pid) = &mut self.erigon_pid {
+            erigon_pid.kill().unwrap();
+        }
+        if let Some(rpcd_pid) = &mut self.rpcdaemon_pid {
+            rpcd_pid.kill().unwrap();
+        }
+
         async move { Ok(()) }.boxed_local()
     }
 
     fn run_command<'a>(
         &mut self,
         command: RunProcess,
-        mode: RuntimeMode,
-        _: &mut Context<Self>,
+        _mode: RuntimeMode,
+        ctx: &mut Context<Self>,
     ) -> ProcessIdResponse<'a> {
-        println!("start_command: {:?} in {:?} mode", command, mode);
-        async move { Ok(0) }.boxed_local()
+        let seq = self.seq.fetch_add(1, Relaxed);
+        let emitter = ctx.emitter.clone().unwrap();
+
+        let (tx, rx) = oneshot::channel();
+
+        tokio::task::spawn_local(async move {
+            // command execution started
+            emitter.command_started(seq).await;
+            // resolves the future returned by `run_command`
+            let _ = tx.send(seq);
+
+            let stdout = format!("[{}] output for command: {:?}", seq, command)
+                .as_bytes()
+                .to_vec();
+
+            tokio::time::delay_for(std::time::Duration::from_millis(30)).await;
+
+            emitter.command_stdout(seq, stdout).await;
+            emitter.command_stopped(seq, 0).await;
+        });
+
+        async move {
+            // awaits `tx.send`
+            Ok(rx.await.unwrap())
+        }
+        .boxed_local()
+    }
+
+    fn offer<'a>(&mut self, _ctx: &mut Context<Self>) -> OutputResponse<'a> {
+        async move {
+            Ok(serialize::json::json!(
+                {
+                    "constraints": "",
+                    "properties": {}
+                }
+            ))
+        }
+        .boxed_local()
     }
 }
 
