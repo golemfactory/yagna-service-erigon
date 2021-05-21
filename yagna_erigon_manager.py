@@ -1,7 +1,7 @@
 import asyncio
 from yapapi.log import enable_default_logger, log_summary, log_event_repr
 from uuid import uuid4
-from turbogeth_payload import TurbogethPayload
+from erigon_payload import ErigonPayload
 from yapapi import Executor, Task
 from datetime import timedelta
 from worker import worker
@@ -60,7 +60,7 @@ class YagnaErigonManager():
 
     async def _create_executor(self):
         async with Executor(
-            payload=TurbogethPayload(),
+            payload=ErigonPayload(),
             max_workers=2,
             budget=1.0,
             timeout=timedelta(minutes=30),
