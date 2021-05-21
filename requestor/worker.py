@@ -37,6 +37,10 @@ async def worker(ctx: WorkContext, tasks):
     task = await tasks.__anext__()
     erigon = task.data
 
+    if erigon.stopped:
+        task.accept_result(result='This erigon was stopped before deployment')
+        return
+
     async for _ in deploy(ctx, erigon):
         yield ctx.commit()
 

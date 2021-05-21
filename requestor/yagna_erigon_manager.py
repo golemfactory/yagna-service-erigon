@@ -13,11 +13,14 @@ class Erigon():
     def __init__(self):
         self.id = self._create_id()
         self.queue = asyncio.Queue()
+        self.start_fut = None
         self.stopped = False
 
     async def start(self):
         fut = asyncio.get_running_loop().create_future()
-        await self.queue.put(fut)
+        self.queue.put_nowait(fut)
+
+        self.start_fut = fut
         await fut
 
     async def status(self):
@@ -27,8 +30,15 @@ class Erigon():
         if self.stopped:
             return
         self.stopped = True
+
         print(f"STOPPING {self}")
-        return await self.run('STOP')
+        if self.start_fut is None:
+            return "not started yet"
+        elif not self.start_fut.done():
+            self.start_fut.cancel()
+            return "stopped during startup"
+        else:
+            return await self.run('STOP')
 
     async def run(self, cmd):
         fut = asyncio.get_running_loop().create_future()
@@ -59,11 +69,19 @@ class YagnaErigonManager():
         return erigon
 
     async def close(self):
-        stop_erigon_tasks = [erigon.stop() for erigon in self.erigons if not erigon.stopped]
-        await asyncio.gather(*stop_erigon_tasks)
-
+        #   Remove all sheduled erigons from queue and stop Executor task generator
+        while True:
+            try:
+                self.command_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
         self.command_queue.put_nowait('CLOSE')
-        await self.executor_task
+
+        #   Stop all Erigons & wait for the Executor to finish
+        tasks = [erigon.stop() for erigon in self.erigons]
+        tasks.append(self.executor_task)
+
+        await asyncio.gather(*tasks)
 
     async def _create_executor(self):
         async with Executor(
