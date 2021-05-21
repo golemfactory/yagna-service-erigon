@@ -4,7 +4,8 @@ import asyncio
 
 async def main():
     yem = YagnaErigonManager()
-    erigon = await yem.deploy_erigon()
+    erigon = yem.create_erigon()
+    await erigon.start()
     print(f"New Erigon deployed, id: {erigon.id}")
 
     for i in range(3):

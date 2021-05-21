@@ -41,17 +41,13 @@ class Erigon():
 class YagnaErigonManager():
     def __init__(self):
         enable_default_logger(log_file='log.log')
-        self.executor_task = None
+        self.executor_task = asyncio.create_task(self._create_executor())
         self.tasks_queue = asyncio.Queue()
         self.closing = False
 
-    async def deploy_erigon(self):
-        if self.executor_task is None:
-            self.executor_task = asyncio.create_task(self._create_executor())
-
+    def create_erigon(self):
         erigon = Erigon()
         self.tasks_queue.put_nowait(erigon)
-        await erigon.start()
         return erigon
 
     async def close(self):
