@@ -42,16 +42,15 @@ class YagnaErigonManager():
     def __init__(self):
         enable_default_logger(log_file='log.log')
         self.executor_task = asyncio.create_task(self._create_executor())
-        self.tasks_queue = asyncio.Queue()
-        self.closing = False
+        self.command_queue = asyncio.Queue()
 
     def create_erigon(self):
         erigon = Erigon()
-        self.tasks_queue.put_nowait(erigon)
+        self.command_queue.put_nowait(erigon)
         return erigon
 
     async def close(self):
-        self.closing = True
+        self.command_queue.put_nowait('CLOSE')
         await self.executor_task
 
     async def _create_executor(self):
@@ -71,14 +70,12 @@ class YagnaErigonManager():
 
             async def tasks():
                 while True:
-                    if self.closing:
+                    data = await self.command_queue.get()
+                    if type(data) is str:
+                        assert data == 'CLOSE'
                         break
-
-                    if self.tasks_queue.empty():
-                        await asyncio.sleep(0.1)
                     else:
-                        erigon = self.tasks_queue.get_nowait()
-                        task = Task(data=erigon)
+                        task = Task(data=data)
                         yield task
 
             async for task in executor.submit(worker, tasks()):
