@@ -13,6 +13,7 @@ class Erigon():
     def __init__(self):
         self.id = self._create_id()
         self.queue = asyncio.Queue()
+        self.stopped = False
 
     async def start(self):
         fut = asyncio.get_running_loop().create_future()
@@ -23,6 +24,10 @@ class Erigon():
         return await self.run('STATUS')
 
     async def stop(self):
+        if self.stopped:
+            return
+        self.stopped = True
+        print(f"STOPPING {self}")
         return await self.run('STOP')
 
     async def run(self, cmd):
@@ -41,15 +46,22 @@ class Erigon():
 class YagnaErigonManager():
     def __init__(self):
         enable_default_logger(log_file='log.log')
-        self.executor_task = asyncio.create_task(self._create_executor())
         self.command_queue = asyncio.Queue()
+        self.erigons = []
+        self.executor_task = None
 
     def create_erigon(self):
+        if self.executor_task is None:
+            self.executor_task = asyncio.create_task(self._create_executor())
         erigon = Erigon()
         self.command_queue.put_nowait(erigon)
+        self.erigons.append(erigon)
         return erigon
 
     async def close(self):
+        stop_erigon_tasks = [erigon.stop() for erigon in self.erigons if not erigon.stopped]
+        await asyncio.gather(*stop_erigon_tasks)
+
         self.command_queue.put_nowait('CLOSE')
         await self.executor_task
 
