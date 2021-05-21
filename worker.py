@@ -4,9 +4,7 @@ import json
 
 def parse_result(raw_data):
     command_executed = raw_data[0]
-    msg = command_executed.message
-    msg = json.loads(msg)
-    stdout = msg['stdout']
+    stdout = command_executed.stdout
     mock_echo_data, erigon_data = stdout.split('ERIGON: ', 2)
     erigon_data = json.loads(erigon_data)
     return erigon_data
