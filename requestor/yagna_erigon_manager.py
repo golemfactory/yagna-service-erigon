@@ -5,8 +5,23 @@ from erigon_payload import ErigonPayload
 from yapapi import Executor, Task
 from datetime import timedelta
 from worker import worker
+from dataclasses import dataclass, field
+from typing import Optional
+from datetime import datetime
+
 
 SUBNET_TAG = 'ttt'
+
+
+@dataclass
+class RuntimeState():
+    status: str
+    url: Optional[str] = None
+    secret: Optional[str] = None
+    timestamp: datetime = field(init=False)
+
+    def __post_init__(self):
+        self.timestamp = datetime.now()
 
 
 class Erigon():
@@ -15,13 +30,26 @@ class Erigon():
         self.queue = asyncio.Queue()
         self.start_fut = None
         self.stopped = False
+        self.runtime = RuntimeState('initializing')
+        self.update_task = asyncio.create_task(self.update_state())
+
+    async def update_state(self):
+        while True:
+            if self.stopped:
+                self.runtime = RuntimeState('stopping')
+                break
+            res = await self.status()
+            self.runtime = RuntimeState(**res)
+            await asyncio.sleep(1)
 
     async def start(self):
         fut = asyncio.get_running_loop().create_future()
         self.queue.put_nowait(fut)
 
         self.start_fut = fut
+        self.runtime = RuntimeState('starting')
         await fut
+        self.runtime = RuntimeState('started')
 
     async def status(self):
         return await self.run('STATUS')

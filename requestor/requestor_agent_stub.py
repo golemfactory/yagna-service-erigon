@@ -8,8 +8,9 @@ async def main(yem):
     print(f"New Erigon deployed, id: {erigon.id}")
 
     while True:
-        status = await erigon.status()
-        print(f"Erigon {erigon.id} status: {status}")
+        print(f"Erigon {erigon.id} update: {erigon.runtime.timestamp} "
+              f"status: {erigon.runtime.status} url: {erigon.runtime.url}")
+        await asyncio.sleep(1)
 
 if __name__ == '__main__':
     yem = YagnaErigonManager()
