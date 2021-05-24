@@ -30,16 +30,16 @@ class Erigon():
         self.queue = asyncio.Queue()
         self.start_fut = None
         self.stopped = False
-        self.runtime = RuntimeState('initializing')
+        self.runtime_state = RuntimeState('initializing')
         self.update_task = asyncio.create_task(self.update_state())
 
     async def update_state(self):
         while True:
             if self.stopped:
-                self.runtime = RuntimeState('stopping')
+                self.runtime_state = RuntimeState('stopping')
                 break
             res = await self.status()
-            self.runtime = RuntimeState(**res)
+            self.runtime_state = RuntimeState(**res)
             if not self.stopped:
                 #   Additional check for self.stopped because this could have changed
                 #   while we awaited for self.status()
@@ -50,9 +50,9 @@ class Erigon():
         self.queue.put_nowait(fut)
 
         self.start_fut = fut
-        self.runtime = RuntimeState('starting')
+        self.runtime_state = RuntimeState('starting')
         await fut
-        self.runtime = RuntimeState('started')
+        self.runtime_state = RuntimeState('started')
 
     async def status(self):
         return await self.run('STATUS')
