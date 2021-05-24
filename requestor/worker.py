@@ -31,9 +31,8 @@ async def worker(ctx: WorkContext, tasks):
         return
 
     #   DEPLOYMENT
-    deployment_fut = await erigon.queue.get()
     try:
-        #   NOTE: this is not necessary, but without any ctx.run() it seems that
+        #   NOTE: this ctx.run() is not necessary, but without any ctx.run() it seems that
         #   ctx.commit() does nothing and we would deploy only when first status
         #   request comes
         ctx.run('STATUS')
@@ -42,12 +41,9 @@ async def worker(ctx: WorkContext, tasks):
         print("DEPLOYMENT FAILED ", e)
         #   Put the deployment_fut back to queue so when this function
         #   restarts we'll be in the same state
-        erigon.queue.put_nowait(deployment_fut)
         task.reject_result(retry=True)
         return
-
-    #   We got here -> deployment succeeded
-    deployment_fut.set_result({'status': 'DEPLOYED'})
+    erigon.started = True
 
     #   REQUEST PROCESSING
     async for requesting_future in process_commands(ctx, erigon):

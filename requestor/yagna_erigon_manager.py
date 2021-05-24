@@ -28,8 +28,8 @@ class Erigon():
     def __init__(self):
         self.id = self._create_id()
         self.queue = asyncio.Queue()
-        self.start_fut = None
         self.stopped = False
+        self.started = False
         self.runtime_state = RuntimeState('initializing')
         self.update_task = asyncio.create_task(self.update_state())
 
@@ -45,15 +45,6 @@ class Erigon():
                 #   while we awaited for self.status()
                 await asyncio.sleep(SECONDS_BETWEEN_UPDATES)
 
-    async def start(self):
-        fut = asyncio.get_running_loop().create_future()
-        self.queue.put_nowait(fut)
-
-        self.start_fut = fut
-        self.runtime_state = RuntimeState('starting')
-        await fut
-        self.runtime_state = RuntimeState('started')
-
     async def status(self):
         return await self.run('STATUS')
 
@@ -63,11 +54,8 @@ class Erigon():
         self.stopped = True
 
         print(f"STOPPING {self}")
-        if self.start_fut is None:
+        if not self.started:
             return "not started yet"
-        elif not self.start_fut.done():
-            self.start_fut.cancel()
-            return "stopped during startup"
         else:
             return await self.run('STOP')
 
