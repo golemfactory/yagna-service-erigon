@@ -46,9 +46,13 @@ async def worker(ctx: WorkContext, tasks):
     erigon.started = True
 
     #   REQUEST PROCESSING
-    async for requesting_future in process_commands(ctx, erigon):
-        processing_future = yield ctx.commit()
-        result = parse_result(processing_future.result())
-        requesting_future.set_result(result)
+    try:
+        async for requesting_future in process_commands(ctx, erigon):
+            processing_future = yield ctx.commit()
+            result = parse_result(processing_future.result())
+            requesting_future.set_result(result)
+    except Exception as e:
+        print("COMMAND FAILED", e)
+        erigon.disable()
 
     task.accept_result(result='DONE')
