@@ -3,10 +3,25 @@ from yapapi.log import enable_default_logger, log_summary, log_event_repr
 from uuid import uuid4
 from erigon_payload import ErigonPayload
 from yapapi import Executor, Task
-from datetime import timedelta
+from datetime import timedelta, datetime
 from worker import worker
 
+from dataclasses import dataclass, field
+from typing import Optional
+
 SUBNET_TAG = 'ttt'
+SECONDS_BETWEEN_UPDATES = 1
+
+
+@dataclass
+class RuntimeState():
+    status: str
+    url: Optional[str] = None
+    secret: Optional[str] = None
+    timestamp: datetime = field(init=False)
+
+    def __post_init__(self):
+        self.timestamp = datetime.now()
 
 
 class Erigon():
@@ -15,13 +30,29 @@ class Erigon():
         self.queue = asyncio.Queue()
         self.start_fut = None
         self.stopped = False
+        self.runtime_state = RuntimeState('initializing')
+        self.update_task = asyncio.create_task(self.update_state())
+
+    async def update_state(self):
+        while True:
+            if self.stopped:
+                self.runtime_state = RuntimeState('stopping')
+                break
+            res = await self.status()
+            self.runtime_state = RuntimeState(**res)
+            if not self.stopped:
+                #   Additional check for self.stopped because this could have changed
+                #   while we awaited for self.status()
+                await asyncio.sleep(SECONDS_BETWEEN_UPDATES)
 
     async def start(self):
         fut = asyncio.get_running_loop().create_future()
         self.queue.put_nowait(fut)
 
         self.start_fut = fut
+        self.runtime_state = RuntimeState('starting')
         await fut
+        self.runtime_state = RuntimeState('started')
 
     async def status(self):
         return await self.run('STATUS')
