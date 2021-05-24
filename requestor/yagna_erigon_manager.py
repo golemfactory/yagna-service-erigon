@@ -70,11 +70,8 @@ class YagnaErigonManager():
 
     async def close(self):
         #   Remove all sheduled erigons from queue and stop Executor task generator
-        while True:
-            try:
-                self.command_queue.get_nowait()
-            except asyncio.QueueEmpty:
-                break
+        while not self.command_queue.empty():
+            self.command_queue.get_nowait()
         self.command_queue.put_nowait('CLOSE')
 
         #   Stop all Erigons & wait for the Executor to finish
