@@ -49,8 +49,10 @@ class Erigon():
         return await self.run('STATUS')
 
     async def stop(self):
+        if self.stopped:
+            return
+
         self.disable()
-        print(f"STOPPING {self}")
         if self.started:
             return await self.run('STOP')
         else:
@@ -60,6 +62,7 @@ class Erigon():
         if self.stopped:
             return
         self.stopped = True
+        print(f"STOPPING {self}")
 
     async def run(self, cmd):
         fut = asyncio.get_running_loop().create_future()
