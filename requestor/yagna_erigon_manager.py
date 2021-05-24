@@ -40,7 +40,10 @@ class Erigon():
                 break
             res = await self.status()
             self.runtime = RuntimeState(**res)
-            await asyncio.sleep(SECONDS_BETWEEN_UPDATES)
+            if not self.stopped:
+                #   Additional check for self.stopped because this could have changed
+                #   while we awaited for self.status()
+                await asyncio.sleep(SECONDS_BETWEEN_UPDATES)
 
     async def start(self):
         fut = asyncio.get_running_loop().create_future()
