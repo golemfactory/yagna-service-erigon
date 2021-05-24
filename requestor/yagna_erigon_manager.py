@@ -3,12 +3,11 @@ from yapapi.log import enable_default_logger, log_summary, log_event_repr
 from uuid import uuid4
 from erigon_payload import ErigonPayload
 from yapapi import Executor, Task
-from datetime import timedelta
+from datetime import timedelta, datetime
 from worker import worker
+
 from dataclasses import dataclass, field
 from typing import Optional
-from datetime import datetime
-
 
 SUBNET_TAG = 'ttt'
 
@@ -98,11 +97,8 @@ class YagnaErigonManager():
 
     async def close(self):
         #   Remove all sheduled erigons from queue and stop Executor task generator
-        while True:
-            try:
-                self.command_queue.get_nowait()
-            except asyncio.QueueEmpty:
-                break
+        while not self.command_queue.empty():
+            self.command_queue.get_nowait()
         self.command_queue.put_nowait('CLOSE')
 
         #   Stop all Erigons & wait for the Executor to finish
