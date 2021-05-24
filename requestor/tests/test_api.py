@@ -1,6 +1,7 @@
 import pytest
 import os
 import requests
+from time import sleep
 
 BASE_URL = os.environ.get('BASE_URL')
 if BASE_URL and '://' not in BASE_URL:
@@ -27,3 +28,13 @@ def test_api():
     erigon_id = data['id']
 
     assert run_request('GET', 'getInstances') == (200, [data])
+
+    sleep(20)
+
+    status, data = run_request('GET', 'getInstances')
+    assert status == 200
+    assert data[0] == {'id': erigon_id, 'status': 'running', 'url': 'www.some.where/erigon:7987'}
+
+    status, data = run_request('POST', f'stopInstance/{erigon_id}')
+    assert status == 200
+    assert data == {'id': erigon_id, 'status': 'stopped', 'url': None}
