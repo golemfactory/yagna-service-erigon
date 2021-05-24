@@ -6,8 +6,8 @@ use std::sync::atomic::Ordering::Relaxed;
 use tokio::process::{Child, Command};
 use ya_runtime_sdk::*;
 
-const ERIGON_BIN: &str = "./tg";
-const RPCDAEMON_BIN: &str = "./rpcdaemon";
+const ERIGON_BIN: &str = "tg";
+const RPCDAEMON_BIN: &str = "rpcdaemon";
 
 const ERIGON_PARAMS: &[&str; 2] = &["--datadir", "/data/turbo-geth/datadir"];
 const RPCDAEMON_PARAMS: &[&str; 14] = &[
@@ -50,17 +50,19 @@ impl Runtime for ErigonRuntime {
         .boxed_local()
     }
 
-    fn start<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
+    fn start<'a>(&mut self, _: &mut Context<Self>) -> OutputResponse<'a> {
         let chain_id = String::from("goerli");
+        let current_exe_path = std::env::current_exe().unwrap();
+        let path = current_exe_path.parent().unwrap();
 
-        let erigon_pid = Command::new(ERIGON_BIN)
+        let erigon_pid = Command::new(&path.join(ERIGON_BIN))
             .args(ERIGON_PARAMS)
             .arg("--chain")
             .arg(chain_id)
             .spawn()
             .expect("Erigon: Failed to spawn");
 
-        let rpcd_pid = Command::new(RPCDAEMON_BIN)
+        let rpcd_pid = Command::new(&path.join(RPCDAEMON_BIN))
             .args(RPCDAEMON_PARAMS)
             .spawn()
             .expect("RPC Daemon: Failed to spawn");
@@ -68,18 +70,12 @@ impl Runtime for ErigonRuntime {
         self.erigon_pid = Some(erigon_pid);
         self.rpcdaemon_pid = Some(rpcd_pid);
 
-        let emitter = ctx.emitter.clone().unwrap();
         let stdout = format!(
             "Erigon available at: http://{}:8545",
             local_ipaddress::get().unwrap()
-        )
-        .as_bytes()
-        .to_vec();
+        );
 
-        async move {
-            emitter.command_stdout(0, stdout).await;
-            Ok("start".into())
-        }.boxed_local()
+        async move { Ok(stdout.into()) }.boxed_local()
     }
 
     fn stop<'a>(&mut self, _: &mut Context<Self>) -> EmptyResponse<'a> {
@@ -95,7 +91,7 @@ impl Runtime for ErigonRuntime {
 
     fn run_command<'a>(
         &mut self,
-        _: RunProcess,
+        command: RunProcess,
         _mode: RuntimeMode,
         ctx: &mut Context<Self>,
     ) -> ProcessIdResponse<'a> {
@@ -110,10 +106,16 @@ impl Runtime for ErigonRuntime {
             // resolves the future returned by `run_command`
             let _ = tx.send(seq);
 
+            let erigon_mock_data = serialize::json::json!(
+                {
+                    "status": "running",
+                    "url": format!("http://{}:8545", local_ipaddress::get().unwrap()),
+                    "secret": "THE SECRET AUTH"
+                }
+            );
             let stdout = format!(
-                "[{}] Erigon available at: http://{}:8545",
-                seq,
-                local_ipaddress::get().unwrap()
+                "[{}] output for command: {:?}. ERIGON: {}",
+                seq, command, erigon_mock_data
             )
             .as_bytes()
             .to_vec();
