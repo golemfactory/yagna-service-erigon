@@ -1,5 +1,6 @@
 use futures::channel::oneshot;
 use futures::FutureExt;
+use local_ipaddress;
 use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering::Relaxed;
 use tokio::process::{Child, Command};
@@ -49,7 +50,7 @@ impl Runtime for ErigonRuntime {
         .boxed_local()
     }
 
-    fn start<'a>(&mut self, _: &mut Context<Self>) -> OutputResponse<'a> {
+    fn start<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
         let chain_id = String::from("goerli");
 
         let erigon_pid = Command::new(ERIGON_BIN)
@@ -67,7 +68,18 @@ impl Runtime for ErigonRuntime {
         self.erigon_pid = Some(erigon_pid);
         self.rpcdaemon_pid = Some(rpcd_pid);
 
-        async move { Ok("start".into()) }.boxed_local()
+        let emitter = ctx.emitter.clone().unwrap();
+        let stdout = format!(
+            "Erigon available at: http://{}:8545",
+            local_ipaddress::get().unwrap()
+        )
+        .as_bytes()
+        .to_vec();
+
+        async move {
+            emitter.command_stdout(0, stdout).await;
+            Ok("start".into())
+        }.boxed_local()
     }
 
     fn stop<'a>(&mut self, _: &mut Context<Self>) -> EmptyResponse<'a> {
@@ -83,7 +95,7 @@ impl Runtime for ErigonRuntime {
 
     fn run_command<'a>(
         &mut self,
-        command: RunProcess,
+        _: RunProcess,
         _mode: RuntimeMode,
         ctx: &mut Context<Self>,
     ) -> ProcessIdResponse<'a> {
@@ -98,11 +110,13 @@ impl Runtime for ErigonRuntime {
             // resolves the future returned by `run_command`
             let _ = tx.send(seq);
 
-            let stdout = format!("[{}] output for command: {:?}", seq, command)
-                .as_bytes()
-                .to_vec();
-
-            tokio::time::delay_for(std::time::Duration::from_millis(30)).await;
+            let stdout = format!(
+                "[{}] Erigon available at: http://{}:8545",
+                seq,
+                local_ipaddress::get().unwrap()
+            )
+            .as_bytes()
+            .to_vec();
 
             emitter.command_stdout(seq, stdout).await;
             emitter.command_stopped(seq, 0).await;
