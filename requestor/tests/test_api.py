@@ -1,13 +1,12 @@
 import pytest
 import os
 import requests
-import random
 
 BASE_URL = os.environ.get('BASE_URL')
 if BASE_URL and '://' not in BASE_URL:
     BASE_URL = 'http://' + BASE_URL
 
-USER_ID = str(random.random())
+USER_ID = 123
 
 
 def run_request(method, endpoint):

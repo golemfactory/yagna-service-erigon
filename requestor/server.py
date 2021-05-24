@@ -2,13 +2,28 @@ from quart import Quart, request
 from yagna_erigon_manager import YagnaErigonManager
 from collections import defaultdict
 import json
+import asyncio
 
 app = Quart(__name__)
 
-yem = YagnaErigonManager()
 
 user_erigons = defaultdict(list)
 
+yem = None
+
+
+async def create_yem():
+    global yem
+    yem = YagnaErigonManager()
+
+@app.before_serving
+async def startup():
+    loop = asyncio.get_event_loop()
+    main_task = loop.create_task(create_yem())
+
+@app.after_serving
+async def close_yagna_erigon_manager():
+    await yem.close()
 
 async def get_user_id():
     data = await request.json
@@ -45,10 +60,6 @@ async def create_instance():
     user_erigons[user_id].append(erigon)
     return erigon_data(erigon), 201
 
-
-@app.after_serving
-async def close_yagna_erigon_manager():
-    await yem.close()
 
 if __name__ == '__main__':
     app.run()
