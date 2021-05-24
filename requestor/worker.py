@@ -39,8 +39,6 @@ async def worker(ctx: WorkContext, tasks):
         yield ctx.commit()
     except Exception as e:
         print("DEPLOYMENT FAILED ", e)
-        #   Put the deployment_fut back to queue so when this function
-        #   restarts we'll be in the same state
         task.reject_result(retry=True)
         return
     erigon.started = True
@@ -54,5 +52,6 @@ async def worker(ctx: WorkContext, tasks):
     except Exception as e:
         print("COMMAND FAILED", e)
         erigon.disable()
+        requesting_future.set_result({'status': 'FAILED'})
 
     task.accept_result(result='DONE')
