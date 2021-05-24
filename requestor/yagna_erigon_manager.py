@@ -97,7 +97,8 @@ class YagnaErigonManager():
 
         #   Stop all Erigons & wait for the Executor to finish
         tasks = [erigon.stop() for erigon in self.erigons]
-        tasks.append(self.executor_task)
+        if self.executor_task is not None:
+            tasks.append(self.executor_task)
 
         await asyncio.gather(*tasks)
 
