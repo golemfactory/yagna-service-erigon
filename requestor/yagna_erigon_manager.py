@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 SUBNET_TAG = 'ttt'
+SECONDS_BETWEEN_UPDATES = 1
 
 
 @dataclass
@@ -39,7 +40,7 @@ class Erigon():
                 break
             res = await self.status()
             self.runtime = RuntimeState(**res)
-            await asyncio.sleep(1)
+            await asyncio.sleep(SECONDS_BETWEEN_UPDATES)
 
     async def start(self):
         fut = asyncio.get_running_loop().create_future()
