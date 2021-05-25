@@ -70,12 +70,7 @@ impl Runtime for ErigonRuntime {
         self.erigon_pid = Some(erigon_pid);
         self.rpcdaemon_pid = Some(rpcd_pid);
 
-        let stdout = format!(
-            "Erigon available at: http://{}:8545",
-            local_ipaddress::get().unwrap()
-        );
-
-        async move { Ok(stdout.into()) }.boxed_local()
+        async move { Ok("start".into()) }.boxed_local()
     }
 
     fn stop<'a>(&mut self, _: &mut Context<Self>) -> EmptyResponse<'a> {
@@ -120,6 +115,7 @@ impl Runtime for ErigonRuntime {
             .as_bytes()
             .to_vec();
 
+            tokio::time::delay_for(std::time::Duration::from_millis(1)).await;
             emitter.command_stdout(seq, stdout).await;
             emitter.command_stopped(seq, 0).await;
         });
