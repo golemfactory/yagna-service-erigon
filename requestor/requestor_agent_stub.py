@@ -4,8 +4,7 @@ import asyncio
 
 async def main(yem):
     erigon = yem.create_erigon()
-    await erigon.start()
-    print(f"New Erigon deployed, id: {erigon.id}")
+    print(f"New Erigon starting, id: {erigon.id}")
 
     while True:
         print(f"Erigon {erigon.id} update: {erigon.runtime_state.timestamp} "
