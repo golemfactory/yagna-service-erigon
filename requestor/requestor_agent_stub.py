@@ -1,9 +1,11 @@
 from yagna_erigon_manager import YagnaErigonManager
 import asyncio
 
+from services import Erigon
+
 
 async def main(yem):
-    erigon = yem.create_erigon()
+    erigon = yem.create_erigon(Erigon)
     print(f"New Erigon starting, id: {erigon.id}")
 
     while True:

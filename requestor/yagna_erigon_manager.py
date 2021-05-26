@@ -4,22 +4,30 @@ from yapapi import Executor, Task
 from worker import worker
 from datetime import timedelta
 
-from services import Erigon
-
-SUBNET_TAG = 'ttt'
+DEFAULT_EXECUTOR_CFG = {
+    'max_workers': 100,
+    'budget': 1.0,
+    'timeout': timedelta(minutes=30),
+    'subnet_tag': 'ttt',
+    'event_consumer': log_summary(log_event_repr),
+}
 
 
 class YagnaErigonManager():
-    def __init__(self):
+    def __init__(self, executor_cfg={}):
+        self.executor_cfg = DEFAULT_EXECUTOR_CFG.copy()
+        self.executor_cfg.update(executor_cfg)
+
         enable_default_logger(log_file='log.log')
         self.command_queue = asyncio.Queue()
         self.erigons = []
         self.executor_task = None
 
-    def create_erigon(self):
+    def create_erigon(self, cls):
         if self.executor_task is None:
-            self.executor_task = asyncio.create_task(self._create_executor())
-        erigon = Erigon()
+            self.executor_task = asyncio.create_task(self._create_executor(cls.payload))
+
+        erigon = cls()
         self.command_queue.put_nowait(erigon)
         self.erigons.append(erigon)
         return erigon
@@ -37,17 +45,13 @@ class YagnaErigonManager():
 
         await asyncio.gather(*tasks)
 
-    async def _create_executor(self):
+    async def _create_executor(self, payload):
         async with Executor(
-            payload=Erigon.payload,
-            max_workers=2,
-            budget=1.0,
-            timeout=timedelta(minutes=30),
-            subnet_tag=SUBNET_TAG,
-            event_consumer=log_summary(log_event_repr),
+            payload=payload,
+            **self.executor_cfg,
         ) as executor:
             print(
-                f"Using subnet: {SUBNET_TAG}."
+                f"Using subnet: {self.executor_cfg['subnet_tag']}."
                 f"payment driver: {executor.driver}, "
                 f"and network: {executor.network}\n"
             )
