@@ -1,20 +1,16 @@
-FROM ubuntu
-WORKDIR erigon_server
-    
-#   Install python
-RUN apt update && \
-    apt install -y software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt update && \
-    apt install python3.8 python3-distutils
+FROM python:3.8
 
-#   And pip
-ADD https://bootstrap.pypa.io/get-pip.py get-pip.py
-RUN python3 get-pip.py
+#   Install yagna
+#   NOTE: ARG instead of ENV because I don't want this in the final image
+ARG DEBIAN_FRONTEND=noninteractive
 
-#   Install yagna & certificates
 ADD https://github.com/golemfactory/yagna/releases/download/pre-rel-v0.6.6-rc1/golem-requestor_pre-rel-v0.6.6-rc1_amd64.deb yagna.deb
-RUN yes | apt install -y ./yagna.deb \
+RUN dpkg-preconfigure ./yagna.deb
+RUN echo "golem-requestor	golem/terms/testnet-01	select	yes" | debconf-set-selections
+RUN apt install -y ./yagna.deb
+
+#   Install certificates
+RUN apt update \
     && apt install -y libssl-dev ca-certificates \
     && update-ca-certificates
 
@@ -22,7 +18,7 @@ COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
 
 #   Cleanup
-RUN rm yagna.deb get-pip.py requirements.txt
+RUN rm yagna.deb requirements.txt
 
 #   Replace yapapi with the non-released version
 #   (All those lines should disappear with new yapapi version in requirements.txt)
