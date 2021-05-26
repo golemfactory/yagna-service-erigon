@@ -2,7 +2,7 @@ from .erigon import Erigon
 from yapapi.payload import vm
 
 STARTING_RESULT = {'status': 'starting', 'url': None, 'secret': None}
-RUNNING_RESULT = {'status': 'running', 'url': 'www.pseudo/eri/gon:123', 'secret': 'AAAUTH'}
+RUNNING_RESULT = {'status': 'running', 'url': 'www.some.where/erigon:7987', 'secret': 'AAAUTH'}
 
 
 class PseudoErigon(Erigon):
