@@ -39,6 +39,7 @@ pub struct ErigonRuntime {
     seq: AtomicU64,
     erigon_pid: Option<Child>,
     rpcdaemon_pid: Option<Child>,
+    host: Option<String>,
 }
 
 impl Runtime for ErigonRuntime {
@@ -107,6 +108,7 @@ impl Runtime for ErigonRuntime {
         self.erigon_pid = Some(erigon_pid);
         self.rpcdaemon_pid = Some(rpcd_pid);
 
+        self.host = ctx.conf.public_addr.clone();
         async move { Ok("start".into()) }.boxed_local()
     }
 
