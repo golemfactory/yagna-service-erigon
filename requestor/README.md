@@ -2,8 +2,8 @@
 
     docker build . -f server.Dockerfile -t erigon-server
 
-    #   Run on devnet  with a mocked Erigon
-    docker run -p 5000:5000 -e "ERIGON_CLASS=PseudoErigon" -e "SUBNET_TAG=devnet.beta.1" erigon-server 
+    #   Run on devnet with a mocked Erigon
+    docker run -p 5000:5000 -e "ERIGON_CLASS=PseudoErigon" -e "SUBNET_TAG=devnet-beta.1" erigon-server 
 
     #   or run with a real Erigon, assuming there is some subnet that supports it
     docker run -p 5000:5000 -e "SUBNET_TAG=some_subnet_with_erigon" erigon-server

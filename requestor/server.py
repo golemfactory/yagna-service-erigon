@@ -19,7 +19,15 @@ class UserDataMissing(Exception):
 
 async def create_yem():
     global yem
-    yem = YagnaErigonManager()
+    yem = YagnaErigonManager(get_config())
+
+
+def get_config():
+    cfg = {}
+    subnet_tag = os.environ.get('SUBNET_TAG', '')
+    if subnet_tag:
+        cfg['subnet_tag'] = subnet_tag
+    return cfg
 
 
 def erigon_cls():

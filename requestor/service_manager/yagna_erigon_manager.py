@@ -53,9 +53,9 @@ class YagnaErigonManager():
             **self.executor_cfg,
         ) as executor:
             print(
-                f"Using subnet: {self.executor_cfg['subnet_tag']}."
-                f"payment driver: {executor.driver}, "
-                f"and network: {executor.network}\n"
+                f"Using subnet: {self.executor_cfg['subnet_tag']}  "
+                f"payment driver: {executor.driver}  "
+                f"network: {executor.network}\n"
             )
 
             async def tasks():

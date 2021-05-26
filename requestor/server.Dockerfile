@@ -34,6 +34,8 @@ RUN chmod +x yagna_init.sh
 COPY server.py       .
 COPY service_manager service_manager
 
+ENV PYTHONUNBUFFERED=1
+
 ENTRYPOINT ["bash", "-c", "         \
                 ./yagna_init.sh;    \
                 YAGNA_APPKEY=$(yagna app-key list | tail -2 | head -1 | head -c53 | tail -c32) \
