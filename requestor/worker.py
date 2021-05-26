@@ -1,25 +1,4 @@
 from yapapi import WorkContext
-import json
-
-
-def parse_result(raw_data):
-    command_executed = raw_data[0]
-    stdout = command_executed.stdout
-    mock_echo_data, erigon_data = stdout.split('ERIGON: ', 2)
-    erigon_data = json.loads(erigon_data)
-    return erigon_data
-
-
-async def process_commands(ctx, erigon):
-    queue = erigon.queue
-    while True:
-        command, requesting_future = await queue.get()
-        if command == 'STATUS':
-            ctx.run(command)
-            yield requesting_future
-        elif command == 'STOP':
-            requesting_future.set_result({'status': 'STOPPING'})
-            break
 
 
 async def worker(ctx: WorkContext, tasks):
@@ -32,10 +11,7 @@ async def worker(ctx: WorkContext, tasks):
 
     #   DEPLOYMENT
     try:
-        #   NOTE: this ctx.run() is not necessary, but without any ctx.run() it seems that
-        #   ctx.commit() does nothing and we would deploy only when first status
-        #   request comes
-        ctx.run('STATUS')
+        erigon.start(ctx)
         yield ctx.commit()
     except Exception as e:
         print("DEPLOYMENT FAILED ", e)
@@ -45,13 +21,12 @@ async def worker(ctx: WorkContext, tasks):
 
     #   REQUEST PROCESSING
     try:
-        async for requesting_future in process_commands(ctx, erigon):
+        async for set_success, set_failure in erigon.process_commands(ctx):
             processing_future = yield ctx.commit()
-            result = parse_result(processing_future.result())
-            requesting_future.set_result(result)
+            set_success(processing_future)
     except Exception as e:
         print("COMMAND FAILED", e)
         erigon.disable()
-        requesting_future.set_result({'status': 'FAILED'})
+        set_failure()
 
     task.accept_result(result='DONE')

@@ -3,6 +3,7 @@ from uuid import uuid4
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Optional
+import json
 
 from .erigon_payload import ErigonPayload
 
@@ -68,6 +69,38 @@ class Erigon():
         await self.queue.put((cmd, fut))
         await fut
         return fut.result()
+
+    #   FUNCTIONS CALLED FROM INSIDE WORKER
+    def start(self, ctx):
+        #   NOTE: this ctx.run() is not necessary, but without any ctx.run() it seems that
+        #   ctx.commit() does nothing and we would deploy only when first status
+        #   request comes
+        ctx.run('STATUS')
+
+    async def process_commands(self, ctx):
+        queue = self.queue
+        while True:
+            command, requesting_future = await queue.get()
+            if command == 'STATUS':
+                def on_success(processing_future):
+                    result = self._parse_status_result(processing_future.result())
+                    requesting_future.set_result(result)
+
+                def on_failure():
+                    requesting_future.set_result({'status': 'FAILED'})
+
+                ctx.run(command)
+                yield on_success, on_failure
+            elif command == 'STOP':
+                requesting_future.set_result({'status': 'STOPPING'})
+                break
+
+    def _parse_status_result(self, raw_data):
+        command_executed = raw_data[0]
+        stdout = command_executed.stdout
+        mock_echo_data, erigon_data = stdout.split('ERIGON: ', 2)
+        erigon_data = json.loads(erigon_data)
+        return erigon_data
 
     def _create_id(self):
         return uuid4().hex
