@@ -25,7 +25,7 @@ class YagnaErigonManager():
 
     def create_erigon(self, cls):
         if self.executor_task is None:
-            self.executor_task = asyncio.create_task(self._create_executor(cls.payload))
+            self.executor_task = asyncio.create_task(self._create_executor(cls))
 
         erigon = cls()
         self.command_queue.put_nowait(erigon)
@@ -45,7 +45,9 @@ class YagnaErigonManager():
 
         await asyncio.gather(*tasks)
 
-    async def _create_executor(self, payload):
+    async def _create_executor(self, cls):
+        payload = await cls.get_payload()
+
         async with Executor(
             payload=payload,
             **self.executor_cfg,

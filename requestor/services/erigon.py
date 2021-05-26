@@ -23,7 +23,6 @@ class RuntimeState():
 
 
 class Erigon():
-    payload = ErigonPayload()
 
     def __init__(self):
         self.id = self._create_id()
@@ -32,6 +31,10 @@ class Erigon():
         self.started = False
         self.runtime_state = RuntimeState('initializing')
         self.update_task = asyncio.create_task(self.update_state())
+
+    @classmethod
+    async def get_payload(cls):
+        return ErigonPayload()
 
     async def update_state(self):
         while True:
