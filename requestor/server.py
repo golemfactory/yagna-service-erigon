@@ -3,6 +3,7 @@ from service_manager import YagnaErigonManager, services
 from collections import defaultdict
 import json
 import asyncio
+import os
 
 app = Quart(__name__)
 
@@ -21,10 +22,19 @@ async def create_yem():
     yem = YagnaErigonManager()
 
 
+def erigon_cls():
+    erigon_cls_name = os.environ.get('ERIGON_CLASS', 'Erigon')
+    erigon_cls = getattr(services, erigon_cls_name)
+    return erigon_cls
+
+
 @app.before_serving
 async def startup():
     loop = asyncio.get_event_loop()
     loop.create_task(create_yem())
+
+    #   This is called only to validate the env (or die now)
+    erigon_cls()
 
 
 @app.after_serving
@@ -66,7 +76,7 @@ async def get_instances():
 @app.route('/createInstance', methods=['POST'])
 async def create_instance():
     user_id = await get_user_id()
-    erigon = yem.create_erigon(services.Erigon)
+    erigon = yem.create_erigon(erigon_cls())
     user_erigons[user_id][erigon.id] = erigon
     return erigon_data(erigon), 201
 
