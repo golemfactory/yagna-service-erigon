@@ -1,7 +1,7 @@
 import asyncio
 from yapapi.log import enable_default_logger, log_summary, log_event_repr
 from yapapi import Executor, Task
-from worker import worker
+from .worker import worker
 from datetime import timedelta
 
 DEFAULT_EXECUTOR_CFG = {

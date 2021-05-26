@@ -21,7 +21,11 @@ RUN yes | apt install -y ./yagna.deb \
 COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
 
+#   Cleanup
+RUN rm yagna.deb get-pip.py requirements.txt
+
 #   Replace yapapi with the non-released version
+#   (All those lines should disappear with new yapapi version in requirements.txt)
 RUN pip3 uninstall -y yapapi
 RUN apt-get install -y git
 RUN git clone https://github.com/golemfactory/yapapi.git yapapi_repo
@@ -31,10 +35,8 @@ RUN python3 -m pip install deprecated==1.2.12
 COPY yagna_init.sh .
 RUN chmod +x yagna_init.sh
 
-COPY services                services
-COPY server.py               server.py
-COPY yagna_erigon_manager.py yagna_erigon_manager.py
-COPY worker.py               worker.py
+COPY server.py       .
+COPY service_manager service_manager
 
 ENTRYPOINT ["bash", "-c", "         \
                 ./yagna_init.sh;    \

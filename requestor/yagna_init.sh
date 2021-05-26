@@ -2,7 +2,7 @@
 
 set -m
 
-/usr/bin/yagna service run &
+/usr/bin/yagna service run > yagna_requestor_log 2>1 &
 
 sleep 5
 

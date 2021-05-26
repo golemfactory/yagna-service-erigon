@@ -1,9 +1,8 @@
 from quart import Quart, request
-from yagna_erigon_manager import YagnaErigonManager
+from service_manager import YagnaErigonManager, services
 from collections import defaultdict
 import json
 import asyncio
-import services
 
 app = Quart(__name__)
 
