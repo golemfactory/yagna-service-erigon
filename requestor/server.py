@@ -13,6 +13,10 @@ user_erigons = defaultdict(dict)
 yem = None
 
 
+class UserDataMissing(Exception):
+    pass
+
+
 async def create_yem():
     global yem
     yem = YagnaErigonManager()
@@ -30,8 +34,11 @@ async def close_yagna_erigon_manager():
 
 
 async def get_user_id():
-    data = await request.json
-    return data['user_id']
+    try:
+        data = await request.json
+        return data['user_id']
+    except Exception:
+        raise UserDataMissing
 
 
 def erigon_data(erigon):
@@ -80,6 +87,11 @@ async def sop_instance(erigon_id):
 
     await erigon.stop()
     return erigon_data(erigon), 200
+
+
+@app.errorhandler(UserDataMissing)
+def handle_bad_request(e):
+    return 'All requests require {"user_id": "anything"} body', 400
 
 
 if __name__ == '__main__':
