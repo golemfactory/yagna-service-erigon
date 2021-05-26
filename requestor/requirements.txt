@@ -1,0 +1,4 @@
+Quart==0.14.1
+
+#   NOTE: This is (currently) replaced with a repo-based dev version
+yapapi==0.5.5 

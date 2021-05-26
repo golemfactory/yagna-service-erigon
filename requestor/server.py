@@ -95,4 +95,7 @@ def handle_bad_request(e):
 
 
 if __name__ == '__main__':
-    app.run()
+    #   TODO: we haven't decided yet how we'll be serving the app
+    #         (e.g. is it possible to use more than one gunicorn woker?)
+    #         so it runs just this way as a prototype
+    app.run(host='0.0.0.0')

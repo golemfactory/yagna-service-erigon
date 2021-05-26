@@ -14,7 +14,7 @@
     curl http://localhost:5000/getInstances
 
     #   Prepare testing image
-    docker build . -f pytest.Dockerfile -t erigon-server-test
+    docker build . -f test.Dockerfile -t erigon-server-test
     
     #   Run full tests that assume at least 3 providers
     docker run --network="host" -e "BASE_URL=localhost:5000" erigon-server-test
