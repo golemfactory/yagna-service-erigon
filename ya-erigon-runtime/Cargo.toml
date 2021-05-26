@@ -1,5 +1,5 @@
 [package]
-name = "erigon-runtime"
+name = "ya-erigon-runtime"
 version = "0.1.0"
 authors = ["Golem Factory <contact@golem.network>"]
 repository = "https://github.com/golemfactory/yagna-service-erigon"

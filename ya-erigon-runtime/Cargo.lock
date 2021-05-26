@@ -104,19 +104,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 
 [[package]]
-name = "erigon-runtime"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures",
- "local_ipaddress",
- "serde",
- "structopt",
- "tokio",
- "ya-runtime-sdk",
-]
-
-[[package]]
 name = "fixedbitset"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -924,6 +911,19 @@ checksum = "d59cefebd0c892fa2dd6de581e937301d8552cb44489cdff035c6187cb63fa5e"
 dependencies = [
  "winapi 0.2.8",
  "winapi-build",
+]
+
+[[package]]
+name = "ya-erigon-runtime"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "futures",
+ "local_ipaddress",
+ "serde",
+ "structopt",
+ "tokio",
+ "ya-runtime-sdk",
 ]
 
 [[package]]

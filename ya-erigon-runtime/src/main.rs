@@ -1,6 +1,8 @@
 use futures::channel::oneshot;
 use futures::FutureExt;
-use local_ipaddress;
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+use std::process::Stdio;
 use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering::Relaxed;
 use tokio::process::{Child, Command};
@@ -9,10 +11,8 @@ use ya_runtime_sdk::*;
 const ERIGON_BIN: &str = "tg";
 const RPCDAEMON_BIN: &str = "rpcdaemon";
 
-const ERIGON_PARAMS: &[&str; 2] = &["--datadir", "/data/turbo-geth/datadir"];
-const RPCDAEMON_PARAMS: &[&str; 14] = &[
-    "--datadir",
-    "/data/turbo-geth/datadir",
+//TODO: Make parameter list configurable for further extendability (Erigon & Rpcdaemon)
+const RPCDAEMON_PARAMS: &[&str; 12] = &[
     "--private.api.addr",
     "localhost:9090",
     "--http.addr",
@@ -27,17 +27,39 @@ const RPCDAEMON_PARAMS: &[&str; 14] = &[
     "eth,debug,net,trace,web3,tg",
 ];
 
+#[derive(Default, Deserialize, Serialize)]
+pub struct ErigonConf {
+    public_addr: Option<String>,
+    data_dir: Option<String>,
+}
+
 #[derive(Default, RuntimeDef)]
+#[conf(ErigonConf)]
 pub struct ErigonRuntime {
     seq: AtomicU64,
     erigon_pid: Option<Child>,
     rpcdaemon_pid: Option<Child>,
+    host: Option<String>,
 }
 
 impl Runtime for ErigonRuntime {
     const MODE: RuntimeMode = RuntimeMode::Server;
 
-    fn deploy<'a>(&mut self, _: &mut Context<Self>) -> OutputResponse<'a> {
+    fn deploy<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
+        let data_dir_path = PathBuf::from(
+            ctx.conf
+                .data_dir
+                .clone()
+                .expect("Configuration data_dir is missing"),
+        );
+        let parent_data_dir = data_dir_path.as_path();
+        if !(parent_data_dir.exists() && parent_data_dir.is_dir()) {
+            panic!(
+                "Configuration 'data_dir' directory has to exists and needs to contain
+                 the directory for every supported network, named of the network"
+            );
+        }
+
         async move {
             Ok(serialize::json::json!(
                 {
@@ -50,35 +72,61 @@ impl Runtime for ErigonRuntime {
         .boxed_local()
     }
 
-    fn start<'a>(&mut self, _: &mut Context<Self>) -> OutputResponse<'a> {
+    fn start<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
+        //TODO: Receive chain_id from start parameters when Yapapi ready
+        // see: https://github.com/golemfactory/yapapi/issues/390
         let chain_id = String::from("goerli");
         let current_exe_path = std::env::current_exe().unwrap();
         let path = current_exe_path.parent().unwrap();
 
-        let erigon_pid = Command::new(&path.join(ERIGON_BIN))
-            .args(ERIGON_PARAMS)
-            .arg("--chain")
-            .arg(chain_id)
-            .spawn()
-            .expect("Erigon: Failed to spawn");
+        let data_dir_path = prepare_data_dir_path(
+            &ctx.conf
+                .data_dir
+                .clone()
+                .expect("Configuration data_dir is missing"),
+            &chain_id,
+        );
+        let mut erigon_pid = spawn_process(
+            &mut Command::new(&path.join(ERIGON_BIN))
+                .arg("--chain")
+                .arg(chain_id),
+            &data_dir_path,
+            &[""; 0],
+        )
+        .expect("Erigon: Failed to spawn");
 
-        let rpcd_pid = Command::new(&path.join(RPCDAEMON_BIN))
-            .args(RPCDAEMON_PARAMS)
-            .spawn()
-            .expect("RPC Daemon: Failed to spawn");
+        let rpcd_pid = spawn_process(
+            &mut Command::new(&path.join(RPCDAEMON_BIN)),
+            &data_dir_path,
+            RPCDAEMON_PARAMS,
+        );
+        if !rpcd_pid.is_ok() {
+            let _ = (&mut erigon_pid).kill();
+        }
+        let rpcd_pid = rpcd_pid.expect("RPC Daemon: Failed to spawn");
 
         self.erigon_pid = Some(erigon_pid);
         self.rpcdaemon_pid = Some(rpcd_pid);
 
+        self.host = ctx.conf.public_addr.clone();
         async move { Ok("start".into()) }.boxed_local()
     }
 
     fn stop<'a>(&mut self, _: &mut Context<Self>) -> EmptyResponse<'a> {
+        let mut erigon_kill_ok = false;
+        let mut rpcd_kill_ok = false;
         if let Some(erigon_pid) = &mut self.erigon_pid {
-            erigon_pid.kill().unwrap();
+            erigon_kill_ok = erigon_pid.kill().is_ok();
         }
         if let Some(rpcd_pid) = &mut self.rpcdaemon_pid {
-            rpcd_pid.kill().unwrap();
+            rpcd_kill_ok = rpcd_pid.kill().is_ok();
+        }
+
+        if !(erigon_kill_ok && rpcd_kill_ok) {
+            panic!(
+                "Unable to kill one of the processes. Erigon: {:?}, RpcDaemon: {:?}.",
+                erigon_kill_ok, rpcd_kill_ok
+            );
         }
 
         async move { Ok(()) }.boxed_local()
@@ -94,6 +142,7 @@ impl Runtime for ErigonRuntime {
         let emitter = ctx.emitter.clone().unwrap();
 
         let (tx, rx) = oneshot::channel();
+        let host = self.host.clone().unwrap_or(String::from("unknown host"));
 
         tokio::task::spawn_local(async move {
             // command execution started
@@ -104,8 +153,8 @@ impl Runtime for ErigonRuntime {
             let erigon_mock_data = serialize::json::json!(
                 {
                     "status": "running",
-                    "url": format!("http://{}:8545", local_ipaddress::get().unwrap()),
-                    "secret": "THE SECRET AUTH"
+                    "url": host,
+                    "secret": ""
                 }
             );
             let stdout = format!(
@@ -143,4 +192,17 @@ impl Runtime for ErigonRuntime {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     ya_runtime_sdk::run::<ErigonRuntime>().await
+}
+
+fn spawn_process(cmd: &mut Command, datadir: &PathBuf, params: &[&str]) -> std::io::Result<Child> {
+    cmd.arg("--datadir")
+        .arg(datadir)
+        .args(params)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+}
+
+fn prepare_data_dir_path(parent_dir: &String, chain_id: &String) -> PathBuf {
+    PathBuf::from(parent_dir).join(chain_id)
 }
