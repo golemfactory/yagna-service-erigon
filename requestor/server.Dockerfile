@@ -1,4 +1,5 @@
 FROM python:3.8
+WORKDIR /erigon_server/
 
 #   Install yagna
 #   NOTE: ARG instead of ENV because I don't want this in the final image
