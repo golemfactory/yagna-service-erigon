@@ -3,6 +3,7 @@ from yagna_erigon_manager import YagnaErigonManager
 from collections import defaultdict
 import json
 import asyncio
+import services
 
 app = Quart(__name__)
 
@@ -59,7 +60,7 @@ async def get_instances():
 @app.route('/createInstance', methods=['POST'])
 async def create_instance():
     user_id = await get_user_id()
-    erigon = yem.create_erigon()
+    erigon = yem.create_erigon(services.Erigon)
     user_erigons[user_id][erigon.id] = erigon
     return erigon_data(erigon), 201
 
