@@ -10,6 +10,8 @@
 
 # test requestor server
 
+NOTE: tests might *sometimes* fail with a slow/unreliable provider. Please repeat : )
+
     #   Check if the server is running (this returns 400 because of missing user_id)
     curl http://localhost:5000/getInstances
 
