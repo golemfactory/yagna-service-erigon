@@ -16,8 +16,8 @@
     #   Prepare testing image
     docker build . -f test.Dockerfile -t erigon-server-test
     
+    #   Run a simple test with only one provider required
+    docker run --network=host -e BASE_URL=localhost:5000 erigon-server-test tests/test_base_usage.py
+    
     #   Run full tests that assume at least 3 providers
     docker run --network=host -e BASE_URL=localhost:5000 erigon-server-test
-    
-    #   Run a simple test with only one provider required
-    docker run --network=host -e BASE_URL=localhost:5000 erigon-server-test tests/test_simple.py

@@ -29,7 +29,7 @@ def test_api():
 
     # assert run_request('GET', 'getInstances') == (200, [data])
 
-    sleep(20)
+    sleep(25)
 
     status, data = run_request('GET', 'getInstances')
     assert status == 200
