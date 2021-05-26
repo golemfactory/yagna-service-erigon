@@ -8,7 +8,7 @@ DEFAULT_EXECUTOR_CFG = {
     'max_workers': 100,
     'budget': 1.0,
     'timeout': timedelta(minutes=30),
-    'subnet_tag': 'ttt',
+    'subnet_tag': 'ttt2',
     'event_consumer': log_summary(log_event_repr),
 }
 
