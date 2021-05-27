@@ -19,21 +19,17 @@ def run_request(method, endpoint):
 
 @pytest.mark.skipif(not BASE_URL, reason="BASE_URL is required")
 def test_api():
-    # assert run_request('GET', 'getInstances') == (200, [])
-
     status, data = run_request('POST', 'createInstance')
     assert status == 201
-    assert data['status'] == 'starting'
-    assert data['url'] is None
     erigon_id = data['id']
-
-    # assert run_request('GET', 'getInstances') == (200, [data])
+    assert data == {'status': 'starting', 'id': erigon_id}
 
     sleep(25)
 
     status, data = run_request('GET', 'getInstances')
     assert status == 200
-    assert {'id': erigon_id, 'status': 'running', 'url': 'www.some.where/erigon:7987'} in data
+    assert {'id': erigon_id, 'status': 'running',
+            'url': 'www.some.where/erigon:7987', 'secret': 'THE SECRET AUTH'} in data
 
     status, data = run_request('POST', f'stopInstance/{erigon_id}')
     assert status == 200
@@ -42,4 +38,4 @@ def test_api():
 
     status, data = run_request('GET', 'getInstances')
     assert status == 200
-    assert {'id': erigon_id, 'status': 'stopped', 'url': None} in data
+    assert {'id': erigon_id, 'status': 'stopped'} in data

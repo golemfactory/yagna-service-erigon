@@ -66,11 +66,15 @@ def erigon_data(erigon):
     else:
         status = 'starting'
 
-    return {
+    data = {
         'id': erigon.id,
-        'url': erigon.runtime_state.url,
         'status': status,
     }
+
+    if status == 'running':
+        data['url'] = erigon.runtime_state.url
+        data['secret'] = erigon.runtime_state.secret
+    return data
 
 
 @app.route('/getInstances', methods=['GET'])
