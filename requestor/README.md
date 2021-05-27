@@ -22,7 +22,6 @@ NOTE: tests might *sometimes* fail with a slow/unreliable provider. Please repea
     docker run --network=host -e BASE_URL=localhost:5000 erigon-server-test tests/test_base_usage.py
     
     #   Run full tests that assume at least 3 providers
-    #   (NOT IMPLEMENTED YET)
     docker run --network=host -e BASE_URL=localhost:5000 erigon-server-test
 
 # use requestor server
