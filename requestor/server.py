@@ -1,4 +1,4 @@
-from quart import Quart, request
+from quart import Quart, request, send_from_directory
 from service_manager import YagnaErigonManager, services
 from collections import defaultdict
 import json
@@ -94,7 +94,7 @@ async def create_instance():
 
 
 @app.route('/stopInstance/<erigon_id>', methods=['POST'])
-async def sop_instance(erigon_id):
+async def stop_instance(erigon_id):
     user_id = await get_user_id()
     try:
         this_user_erigons = user_erigons[user_id]
@@ -108,6 +108,11 @@ async def sop_instance(erigon_id):
 
     await erigon.stop()
     return erigon_data(erigon), 200
+
+
+@app.route('/static/<path:filename>', methods=['GET'])
+async def static_file(filename):
+    return send_from_directory('static', filename)
 
 
 @app.errorhandler(UserDataMissing)
