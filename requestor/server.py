@@ -1,4 +1,5 @@
 from quart import Quart, request, send_from_directory
+from quart_cors import cors
 from service_manager import YagnaErigonManager, services
 from collections import defaultdict
 import json
@@ -6,6 +7,7 @@ import asyncio
 import os
 
 app = Quart(__name__)
+cors(app)
 
 
 user_erigons = defaultdict(dict)
