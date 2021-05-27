@@ -22,4 +22,17 @@ NOTE: tests might *sometimes* fail with a slow/unreliable provider. Please repea
     docker run --network=host -e BASE_URL=localhost:5000 erigon-server-test tests/test_base_usage.py
     
     #   Run full tests that assume at least 3 providers
+    #   (NOT IMPLEMENTED YET)
     docker run --network=host -e BASE_URL=localhost:5000 erigon-server-test
+
+# use requestor server
+
+All requests except static file request must contain a JSON body with 'user\_id': 'the\_thing\_from\_metamask'.
+
+    GET  /getInstances      - list of all instances created by the user (includes stopped instances)
+    POST /createInstance    - create new instance (this *should* use some config data from body, but 
+                              currently everything except 'user_id' is ignored)
+    POST /stopInstance/<id> - stop instance with id <id>
+    GET  /static/<path>     - return a file from 'static' directory, on a given path
+                              (NOTE: this probably should be done somewhere else (nginx?) in the final version)
+                              e.g GET /static/index.html 
