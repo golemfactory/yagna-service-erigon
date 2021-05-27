@@ -113,14 +113,14 @@ impl Runtime for ErigonRuntime {
     }
 
     fn stop<'a>(&mut self, _: &mut Context<Self>) -> EmptyResponse<'a> {
-        let mut erigon_kill_ok = false;
-        let mut rpcd_kill_ok = false;
-        if let Some(erigon_pid) = &mut self.erigon_pid {
-            erigon_kill_ok = erigon_pid.kill().is_ok();
-        }
-        if let Some(rpcd_pid) = &mut self.rpcdaemon_pid {
-            rpcd_kill_ok = rpcd_pid.kill().is_ok();
-        }
+        let erigon_kill_ok = match &mut self.erigon_pid {
+            Some(erigon_pid) => erigon_pid.kill().is_ok(),
+            None => false,
+        };
+        let rpcd_kill_ok = match &mut self.rpcdaemon_pid {
+            Some(rpcdaemon_pid) => rpcdaemon_pid.kill().is_ok(),
+            None => false,
+        };
 
         if !(erigon_kill_ok && rpcd_kill_ok) {
             panic!(
