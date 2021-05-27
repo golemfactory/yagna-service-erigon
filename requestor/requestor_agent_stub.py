@@ -9,7 +9,8 @@ async def main(yem):
 
     while True:
         print(f"Erigon {erigon.id} update: {erigon.runtime_state.timestamp} "
-              f"status: {erigon.runtime_state.status} url: {erigon.runtime_state.url}")
+              f"status: {erigon.runtime_state.status} url: {erigon.runtime_state.url} "
+              f"auth: {erigon.runtime_state.auth}")
         await asyncio.sleep(1)
 
 if __name__ == '__main__':

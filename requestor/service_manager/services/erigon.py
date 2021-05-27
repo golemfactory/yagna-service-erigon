@@ -2,7 +2,7 @@ import asyncio
 from uuid import uuid4
 from datetime import datetime
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Dict
 import json
 
 from .erigon_payload import ErigonPayload
@@ -15,7 +15,7 @@ SECONDS_BETWEEN_UPDATES = 1
 class RuntimeState():
     status: str
     url: Optional[str] = None
-    secret: Optional[str] = None
+    auth: Optional[Dict[str, str]] = None
     timestamp: datetime = field(init=False)
 
     def __post_init__(self):
