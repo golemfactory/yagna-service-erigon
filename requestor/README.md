@@ -8,6 +8,10 @@
     #   or run with a real Erigon, assuming there is some subnet that supports it
     docker run -p 5000:5000 -e SUBNET_TAG=some_subnet_with_erigon erigon-server
 
+# stop requestor server gracefully
+
+    docker exec -it <SERVER-CONTAINER-NAME> pkill python
+
 # test requestor server
 
 NOTE: tests might *sometimes* fail with a slow/unreliable provider. Please repeat : )
