@@ -39,7 +39,6 @@ pub struct ErigonRuntime {
     seq: AtomicU64,
     erigon_pid: Option<Child>,
     rpcdaemon_pid: Option<Child>,
-    host: Option<String>,
 }
 
 impl Runtime for ErigonRuntime {
@@ -108,7 +107,6 @@ impl Runtime for ErigonRuntime {
         self.erigon_pid = Some(erigon_pid);
         self.rpcdaemon_pid = Some(rpcd_pid);
 
-        self.host = ctx.conf.public_addr.clone();
         async move { Ok("start".into()) }.boxed_local()
     }
 
@@ -142,7 +140,11 @@ impl Runtime for ErigonRuntime {
         let emitter = ctx.emitter.clone().unwrap();
 
         let (tx, rx) = oneshot::channel();
-        let host = self.host.clone().unwrap_or(String::from("unknown host"));
+        let public_addr = ctx
+            .conf
+            .public_addr
+            .clone()
+            .unwrap_or(String::from("unknown erigon address"));
 
         tokio::task::spawn_local(async move {
             // command execution started
@@ -153,7 +155,7 @@ impl Runtime for ErigonRuntime {
             let erigon_mock_data = serialize::json::json!(
                 {
                     "status": "running",
-                    "url": host,
+                    "url": public_addr,
                     "secret": ""
                 }
             );
