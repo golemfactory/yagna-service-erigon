@@ -73,7 +73,7 @@ def erigon_data(erigon):
 
     if status == 'running':
         data['url'] = erigon.runtime_state.url
-        data['secret'] = erigon.runtime_state.secret
+        data['auth'] = erigon.runtime_state.auth
     return data
 
 

@@ -29,7 +29,8 @@ def test_api():
     status, data = run_request('GET', 'getInstances')
     assert status == 200
     assert {'id': erigon_id, 'status': 'running',
-            'url': 'www.some.where/erigon:7987', 'secret': 'THE SECRET AUTH'} in data
+            'url': 'www.some.where/erigon:7987',
+            'auth': {'password': 'SECRET_PASSWORD', 'user': 'SECRET_USER'}} in data
 
     status, data = run_request('POST', f'stopInstance/{erigon_id}')
     assert status == 200

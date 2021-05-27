@@ -1,8 +1,15 @@
 from .erigon import Erigon
 from yapapi.payload import vm
 
-STARTING_RESULT = {'status': 'starting', 'url': None, 'secret': None}
-RUNNING_RESULT = {'status': 'running', 'url': 'www.some.where/erigon:7987', 'secret': 'THE SECRET AUTH'}
+STARTING_RESULT = {'status': 'starting', 'url': None, 'auth': None}
+RUNNING_RESULT = {
+    'status': 'running',
+    'url': 'www.some.where/erigon:7987',
+    'auth': {
+        'user': 'SECRET_USER',
+        'password': 'SECRET_PASSWORD',
+    }
+}
 
 
 class PseudoErigon(Erigon):
@@ -27,7 +34,7 @@ class PseudoErigon(Erigon):
             command, requesting_future = await queue.get()
             if command == 'STATUS':
                 def on_success(processing_future):
-                    if self._status_call_cnt < 5:
+                    if self._status_call_cnt < 2:
                         result = STARTING_RESULT
                         self._status_call_cnt += 1
                     else:
