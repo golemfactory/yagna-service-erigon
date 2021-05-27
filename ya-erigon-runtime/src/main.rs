@@ -156,7 +156,10 @@ impl Runtime for ErigonRuntime {
                 {
                     "status": "running",
                     "url": public_addr,
-                    "secret": ""
+                    "auth": {
+                        "user": "<BASIC-AUTH-USER>",
+                        "password": "<BASIC-AUTH-PASS>"
+                    }
                 }
             );
             let stdout = format!(
