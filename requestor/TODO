@@ -1,0 +1,18 @@
+1.  Currently server works on Batch API. The default should be Services API.
+2.  ServiceApiManager creates instances in a sync way, so when many erigons are created
+    at the same time they would have to wait for each other. Fix this.
+3.  Implement cluster.close() on services API. This is not really necessary, but
+    it would allow stopping during startup (I'm not sure if we want this?).
+    NOTE: I'm not sure if this is a good idea, e.g. 
+    https://discord.com/channels/687954211702439971/692023100832743455/847854757530959933
+4.  If we have cluster.close(), than 'STOP' command could be removed.
+    This will
+        *   simplify some things
+        *   make it no longer work with Batch API (but that's probbaly ok?)
+    Maybe it could be implemented in BatchApiManager? Task.cancel() or so?
+5.  There is ServiceState in yapapi. This could hopefully replace RuntimeState.
+    Again, this will not work with Batch API. Let's dump it :)
+6.  If Executor/Golem closes without explicit manager.close, this is some error.
+    Whatever it is, the server should stop working, because doesn't work anymore.
+    (NOTE: it could also restart YagnaErigonManager, but what with e.g. budget-related things?)
+7.  Batch API (dump it?) might have some trouble on exceptions when running commands.
