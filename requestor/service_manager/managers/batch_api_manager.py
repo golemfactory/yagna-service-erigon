@@ -12,17 +12,19 @@ async def worker(ctx: WorkContext, tasks):
         return
 
     #   DEPLOYMENT
+    service = erigon.service_cls(None, ctx)
     try:
-        erigon.start(ctx)
+        service.start(ctx)
         yield ctx.commit()
     except Exception as e:
         print("DEPLOYMENT FAILED ", e)
         task.reject_result(retry=True)
         return
-    erigon.started = True
+
+    erigon.set_service(service)
 
     #   REQUEST PROCESSING
-    run = erigon.process_commands(ctx)
+    run = service.run(ctx)
     try:
         commit = await run.__anext__()
         while True:
@@ -31,9 +33,6 @@ async def worker(ctx: WorkContext, tasks):
     except StopAsyncIteration:
         task.accept_result(result='DONE')
 
-class PseudoContext():
-    def __init__(self):
-        self.id = 'PseudoIDThatWillBeReplaced'
 
 class BatchApiManager():
     def __init__(self, service_cls, executor_cfg):
@@ -45,7 +44,7 @@ class BatchApiManager():
         self.executor_task = asyncio.create_task(self.run())
 
     def add_instance(self):
-        instance = self.service_cls(None, PseudoContext())
+        instance = self.service_cls()
         self.command_queue.put_nowait(instance)
         return instance
 
@@ -57,7 +56,8 @@ class BatchApiManager():
         await self.executor_task
 
     async def run(self):
-        payload = await self.service_cls.get_payload()
+        #   TODO better names
+        payload = await self.service_cls.service_cls.get_payload()
 
         async with Executor(
             payload=payload,
