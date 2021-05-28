@@ -25,10 +25,10 @@ NOTE: tests might *sometimes* fail with a slow/unreliable provider. Please repea
     docker build . -f test.Dockerfile -t erigon-server-test
     
     #   Run a simple test with only one provider required
-    docker run --network=host -e BASE_URL=localhost:5000 erigon-server-test tests/test_base_usage.py
+    docker run --network=host -e BASE_URL=localhost:5000 erigon-server-test
     
     #   Run full tests that assume at least 3 providers
-    docker run --network=host -e BASE_URL=localhost:5000 erigon-server-test
+    docker run --network=host -e BASE_URL=localhost:5000 -e PROVIDER_CNT=3 erigon-server-test
 
 # use requestor server
 
