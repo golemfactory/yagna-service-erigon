@@ -1,5 +1,4 @@
 import asyncio
-from uuid import uuid4
 from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Optional, Dict
@@ -7,6 +6,7 @@ import json
 
 from .erigon_payload import ErigonPayload
 
+from yapapi.executor.services import Service
 
 SECONDS_BETWEEN_UPDATES = 1
 
@@ -22,30 +22,18 @@ class RuntimeState():
         self.timestamp = datetime.now()
 
 
-class Erigon():
-    def __init__(self):
-        self.id = self._create_id()
+class Erigon(Service):
+    def post_init(self):
         self.queue = asyncio.Queue()
         self.stopped = False
         self.started = False
         self.runtime_state = RuntimeState('initializing')
         self.update_task = asyncio.create_task(self.update_state())
 
+    #   FUNCTIONS USED BY THE SERVICES API
     @classmethod
     async def get_payload(cls):
         return ErigonPayload()
-
-    async def update_state(self):
-        while True:
-            if self.stopped:
-                self.runtime_state = RuntimeState('stopping')
-                break
-            res = await self.status()
-            self.runtime_state = RuntimeState(**res)
-            if not self.stopped:
-                #   Additional check for self.stopped because this could have changed
-                #   while we awaited for self.status()
-                await asyncio.sleep(SECONDS_BETWEEN_UPDATES)
 
     async def status(self):
         return await self.run_single_command('STATUS')
@@ -97,15 +85,24 @@ class Erigon():
                 requesting_future.set_result({'status': 'STOPPING'})
                 break
 
+    async def update_state(self):
+        while True:
+            if self.stopped:
+                self.runtime_state = RuntimeState('stopping')
+                break
+            res = await self.status()
+            self.runtime_state = RuntimeState(**res)
+            if not self.stopped:
+                #   Additional check for self.stopped because this could have changed
+                #   while we awaited for self.status()
+                await asyncio.sleep(SECONDS_BETWEEN_UPDATES)
+
     def _parse_status_result(self, raw_data):
         command_executed = raw_data[0]
         stdout = command_executed.stdout
         mock_echo_data, erigon_data = stdout.split('ERIGON: ', 2)
         erigon_data = json.loads(erigon_data)
         return erigon_data
-
-    def _create_id(self):
-        return uuid4().hex
 
     def __repr__(self):
         return f"{type(self).__name__}[id={self.id}]"

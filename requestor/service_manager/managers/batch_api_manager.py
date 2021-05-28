@@ -5,6 +5,7 @@ import asyncio
 async def worker(ctx: WorkContext, tasks):
     task = await tasks.__anext__()
     erigon = task.data
+    erigon._ctx = ctx
 
     if erigon.stopped:
         task.accept_result(result='This erigon was stopped before deployment')
@@ -30,6 +31,9 @@ async def worker(ctx: WorkContext, tasks):
     except StopAsyncIteration:
         task.accept_result(result='DONE')
 
+class PseudoContext():
+    def __init__(self):
+        self.id = 'PseudoIDThatWillBeReplaced'
 
 class BatchApiManager():
     def __init__(self, service_cls, executor_cfg):
@@ -41,7 +45,7 @@ class BatchApiManager():
         self.executor_task = asyncio.create_task(self.run())
 
     def add_instance(self):
-        instance = self.service_cls()
+        instance = self.service_cls(None, PseudoContext())
         self.command_queue.put_nowait(instance)
         return instance
 
