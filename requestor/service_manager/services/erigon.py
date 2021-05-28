@@ -23,9 +23,6 @@ class RuntimeState():
 
 
 class ErigonService(Service):
-    def post_init(self):
-        self.queue = asyncio.Queue()
-
     @classmethod
     async def get_payload(cls):
         return ErigonPayload()
@@ -39,20 +36,22 @@ class ErigonService(Service):
         yield self._ctx.commit()
 
     async def run(self):
-        queue = self.queue
         while True:
-            command, requesting_future = await queue.get()
+            service_signal = await self._listen()
+            command = service_signal.message
             if command == 'STATUS':
                 self._ctx.run(command)
                 try:
                     processing_future = yield self._ctx.commit()
                     result = self._parse_status_result(processing_future.result())
-                    requesting_future.set_result(result)
+                    self._respond_nowait(result, service_signal)
                 except Exception as e:
-                    requesting_future.set_result({'status': f'FAILED: {e}'})
+                    result = {'status': f'FAILED: {e}'}
+                    self._respond_nowait(result, service_signal)
                     break
             elif command == 'STOP':
-                requesting_future.set_result({'status': 'STOPPING'})
+                result = {'status': 'STOPPING'}
+                self._respond_nowait(result, service_signal)
                 break
 
     def _parse_status_result(self, raw_data):
@@ -105,10 +104,11 @@ class Erigon():
         print(f"STOPPING {self}")
 
     async def run_single_command(self, cmd):
-        fut = asyncio.get_running_loop().create_future()
-        await self.service.queue.put((cmd, fut))
-        await fut
-        return fut.result()
+        self.service.send_message_nowait(cmd)
+        service_signal = await self.service.receive_message()
+        #   TODO: how do we check if we got response for the signal sent?
+        #         this is irrelevant now, but could be useful in the future
+        return service_signal.message
 
     async def update_state(self):
         while True:
