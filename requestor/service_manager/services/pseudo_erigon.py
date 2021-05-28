@@ -33,19 +33,19 @@ class PseudoErigon(Erigon):
         while True:
             command, requesting_future = await queue.get()
             if command == 'STATUS':
-                def on_success(processing_future):
+                ctx.run('/bin/echo', 'STATUS')
+                try:
+                    yield ctx.commit()
                     if self._status_call_cnt < 2:
                         result = STARTING_RESULT
                         self._status_call_cnt += 1
                     else:
                         result = RUNNING_RESULT
                     requesting_future.set_result(result)
-
-                def on_failure():
-                    requesting_future.set_result({'status': 'FAILED'})
-
-                ctx.run('/bin/echo', 'STATUS')
-                yield on_success, on_failure
+                except Exception as e:
+                    requesting_future.set_result({'status': f'FAILED: {e}'})
+                    self.disable()
+                    break
             elif command == 'STOP':
                 requesting_future.set_result({'status': 'STOPPING'})
                 break

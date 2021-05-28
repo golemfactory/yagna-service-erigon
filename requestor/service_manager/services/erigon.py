@@ -85,15 +85,15 @@ class Erigon():
         while True:
             command, requesting_future = await queue.get()
             if command == 'STATUS':
-                def on_success(processing_future):
+                ctx.run(command)
+                try:
+                    processing_future = yield ctx.commit()
                     result = self._parse_status_result(processing_future.result())
                     requesting_future.set_result(result)
-
-                def on_failure():
-                    requesting_future.set_result({'status': 'FAILED'})
-
-                ctx.run(command)
-                yield on_success, on_failure
+                except Exception as e:
+                    requesting_future.set_result({'status': f'FAILED: {e}'})
+                    self.disable()
+                    break
             elif command == 'STOP':
                 requesting_future.set_result({'status': 'STOPPING'})
                 break

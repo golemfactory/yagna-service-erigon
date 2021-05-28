@@ -20,13 +20,11 @@ async def worker(ctx: WorkContext, tasks):
     erigon.started = True
 
     #   REQUEST PROCESSING
+    run = erigon.process_commands(ctx)
     try:
-        async for set_success, set_failure in erigon.process_commands(ctx):
-            processing_future = yield ctx.commit()
-            set_success(processing_future)
-    except Exception as e:
-        print("COMMAND FAILED", e)
-        erigon.disable()
-        set_failure()
-
-    task.accept_result(result='DONE')
+        commit = await run.__anext__()
+        while True:
+            results_future = yield commit
+            commit = await run.asend(results_future)
+    except StopAsyncIteration:
+        task.accept_result(result='DONE')
