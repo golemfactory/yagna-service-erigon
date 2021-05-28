@@ -1,11 +1,39 @@
-from ..worker import worker
-from yapapi import Executor, Task
+from yapapi import Executor, Task, WorkContext
 import asyncio
+
+
+async def worker(ctx: WorkContext, tasks):
+    task = await tasks.__anext__()
+    erigon = task.data
+
+    if erigon.stopped:
+        task.accept_result(result='This erigon was stopped before deployment')
+        return
+
+    #   DEPLOYMENT
+    try:
+        erigon.start(ctx)
+        yield ctx.commit()
+    except Exception as e:
+        print("DEPLOYMENT FAILED ", e)
+        task.reject_result(retry=True)
+        return
+    erigon.started = True
+
+    #   REQUEST PROCESSING
+    run = erigon.process_commands(ctx)
+    try:
+        commit = await run.__anext__()
+        while True:
+            results_future = yield commit
+            commit = await run.asend(results_future)
+    except StopAsyncIteration:
+        task.accept_result(result='DONE')
 
 
 class BatchApiManager():
     def __init__(self, service_cls, executor_cfg):
-        print("BATCH API MANAGER INIT")
+        print(" *** YOU ARE USING BATCH API *** ")
         self.service_cls = service_cls
         self.executor_cfg = executor_cfg
 
