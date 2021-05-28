@@ -28,7 +28,7 @@ RUN apt-get install -y git
 RUN git clone https://github.com/golemfactory/yapapi.git yapapi_repo
 #   services api is now in master
 # RUN cd yapapi_repo; git checkout johny-b/blue-services-api-static
-RUN python3 -m pip install deprecated==1.2.12
+RUN python3 -m pip install deprecated==1.2.12 python-statemachine==0.8.0
 
 COPY yagna_init.sh .
 RUN chmod +x yagna_init.sh
