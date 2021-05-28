@@ -1,5 +1,7 @@
 # run requestor server
-
+    
+    #   NOTE: consider --no-cache switch if you built this recently because layer with 
+    #   yapapi pulling might be cached and you might want a fresh yapapi pull
     docker build . -f server.Dockerfile -t erigon-server
 
     #   Run on devnet with a mocked Erigon
