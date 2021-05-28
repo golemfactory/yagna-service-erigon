@@ -1,2 +1,2 @@
 from .erigon import ErigonService
-# from .pseudo_erigon import PseudoErigon
+from .pseudo_erigon import PseudoErigonService
