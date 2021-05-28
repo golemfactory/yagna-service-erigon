@@ -1,6 +1,7 @@
 import asyncio
 from yapapi.log import enable_default_logger, log_summary, log_event_repr
 from datetime import timedelta
+from .service_wrapper import ServiceWrapper
 
 DEFAULT_EXECUTOR_CFG = {
     'max_workers': 100,
@@ -23,17 +24,15 @@ class YagnaErigonManager():
 
     def create_erigon(self, service_cls):
         self._init_manager(service_cls)
-        erigon = self.manager.add_instance()
+        erigon = ServiceWrapper()
+        self.manager.add_instance(erigon)
         self.erigons.append(erigon)
         return erigon
 
     def _init_manager(self, service_cls):
-        #   TODO: maybe - different manager per each service class
-        #         (not needed for the Beta2 but maybe a nice feature?)
+        #   TODO: create different managers for different service classes
         if self.manager is None:
             self.manager = self.manager_cls(service_cls, self.executor_cfg)
-        else:
-            assert self.manager.service_cls == service_cls, "Attempt to create different services"
 
     async def close(self):
         tasks = [erigon.stop() for erigon in self.erigons]

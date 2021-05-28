@@ -4,14 +4,14 @@ import asyncio
 
 async def worker(ctx: WorkContext, tasks):
     task = await tasks.__anext__()
-    erigon = task.data
+    erigon, service_cls = task.data
 
     if erigon.stopped:
         task.accept_result(result='This erigon was stopped before deployment')
         return
 
     #   DEPLOYMENT
-    service = erigon.service_cls(None, ctx)
+    service = service_cls(None, ctx)
     try:
         yield await service.start().__anext__()
     except Exception as e:
@@ -42,10 +42,8 @@ class BatchApiManager():
         self.command_queue = asyncio.Queue()
         self.executor_task = asyncio.create_task(self.run())
 
-    def add_instance(self):
-        instance = self.service_cls()
+    def add_instance(self, instance):
         self.command_queue.put_nowait(instance)
-        return instance
 
     async def stop(self):
         #   Remove all sheduled erigons from queue and stop Executor task generator
@@ -55,8 +53,7 @@ class BatchApiManager():
         await self.executor_task
 
     async def run(self):
-        #   TODO better names
-        payload = await self.service_cls.service_cls.get_payload()
+        payload = await self.service_cls.get_payload()
 
         async with Executor(
             payload=payload,
@@ -75,7 +72,7 @@ class BatchApiManager():
                         assert data == 'CLOSE'
                         break
                     else:
-                        task = Task(data=data)
+                        task = Task(data=(data, self.service_cls))
                         yield task
 
             async for task in executor.submit(worker, tasks()):

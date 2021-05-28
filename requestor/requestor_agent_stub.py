@@ -4,7 +4,7 @@ from service_manager import YagnaErigonManager, services, managers
 
 
 async def main(yem):
-    erigon = yem.create_erigon(services.Erigon)
+    erigon = yem.create_erigon(services.ErigonService)
     print(f"New Erigon starting, id: {erigon.id}")
 
     while True:
