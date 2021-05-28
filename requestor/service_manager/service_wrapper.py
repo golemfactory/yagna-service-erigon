@@ -2,6 +2,7 @@ from typing import Optional, Dict
 from dataclasses import dataclass, field
 import asyncio
 from datetime import datetime
+import uuid
 
 SECONDS_BETWEEN_UPDATES = 1
 
@@ -19,6 +20,7 @@ class RuntimeState():
 
 class ServiceWrapper():
     def __init__(self):
+        self.id = self._create_id()
         self.stopped = False
         self.runtime_state = RuntimeState('initializing')
         self.update_task = asyncio.create_task(self.update_state())
@@ -30,12 +32,6 @@ class ServiceWrapper():
     @property
     def started(self):
         return self.service is not None
-
-    @property
-    def id(self):
-        if self.service:
-            return self.service.id
-        return '[NOT STARTED YET]'
 
     async def status(self):
         return await self.run_single_command('STATUS')
@@ -79,6 +75,9 @@ class ServiceWrapper():
                 #   Additional check for self.stopped because this could have changed
                 #   while we awaited for self.status()
                 await asyncio.sleep(SECONDS_BETWEEN_UPDATES)
+
+    def _create_id(self):
+        return uuid.uuid4().hex
 
     def __repr__(self):
         return f"{type(self).__name__}[id={self.id}]"
