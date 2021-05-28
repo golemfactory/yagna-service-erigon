@@ -79,7 +79,7 @@ def erigon_data(erigon):
     return data
 
 
-@app.route('/getInstances', methods=['GET'])
+@app.route('/getInstances', methods=['POST'])
 async def get_instances():
     user_id = await get_user_id()
     erigons = list(user_erigons[user_id].values())

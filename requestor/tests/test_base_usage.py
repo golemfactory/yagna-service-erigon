@@ -26,7 +26,7 @@ def test_api():
 
     sleep(25)
 
-    status, data = run_request('GET', 'getInstances')
+    status, data = run_request('POST', 'getInstances')
     assert status == 200
     assert {'id': erigon_id, 'status': 'running',
             'url': 'www.some.where/erigon:7987',
@@ -37,6 +37,6 @@ def test_api():
 
     sleep(5)
 
-    status, data = run_request('GET', 'getInstances')
+    status, data = run_request('POST', 'getInstances')
     assert status == 200
     assert {'id': erigon_id, 'status': 'stopped'} in data
