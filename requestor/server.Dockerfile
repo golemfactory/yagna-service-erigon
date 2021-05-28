@@ -26,7 +26,7 @@ RUN rm yagna.deb requirements.txt
 RUN pip3 uninstall -y yapapi
 RUN apt-get install -y git
 RUN git clone https://github.com/golemfactory/yapapi.git yapapi_repo
-RUN cd yapapi_repo; git checkout az/smarter-smart-queue
+# RUN cd yapapi_repo; git checkout az/smarter-smart-queue
 RUN python3 -m pip install deprecated==1.2.12
 
 COPY yagna_init.sh .
