@@ -1,5 +1,6 @@
 from yapapi import Executor, Task, WorkContext
 import asyncio
+from datetime import timedelta
 
 
 async def worker(ctx: WorkContext, tasks):
@@ -56,6 +57,8 @@ class BatchApiManager():
         payload = await self.service_cls.get_payload()
 
         async with Executor(
+            max_workers=100,
+            timeout=timedelta(minutes=30),
             payload=payload,
             **self.executor_cfg,
         ) as executor:
