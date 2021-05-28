@@ -23,7 +23,6 @@ class RuntimeState():
 
 
 class Erigon():
-
     def __init__(self):
         self.id = self._create_id()
         self.queue = asyncio.Queue()
@@ -49,7 +48,7 @@ class Erigon():
                 await asyncio.sleep(SECONDS_BETWEEN_UPDATES)
 
     async def status(self):
-        return await self.run('STATUS')
+        return await self.run_single_command('STATUS')
 
     async def stop(self):
         if self.stopped:
@@ -57,7 +56,7 @@ class Erigon():
 
         self.disable()
         if self.started:
-            return await self.run('STOP')
+            return await self.run_single_command('STOP')
         else:
             return "not started yet"
 
@@ -67,7 +66,7 @@ class Erigon():
         self.stopped = True
         print(f"STOPPING {self}")
 
-    async def run(self, cmd):
+    async def run_single_command(self, cmd):
         fut = asyncio.get_running_loop().create_future()
         await self.queue.put((cmd, fut))
         await fut
