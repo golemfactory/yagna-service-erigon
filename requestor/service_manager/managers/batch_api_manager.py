@@ -36,7 +36,6 @@ async def worker(ctx: WorkContext, tasks):
 
 class BatchApiManager():
     def __init__(self, service_cls, executor_cfg):
-        print(" *** YOU ARE USING BATCH API *** ")
         self.service_cls = service_cls
         self.executor_cfg = executor_cfg
 
@@ -67,6 +66,7 @@ class BatchApiManager():
                 f"payment driver: {executor.driver}  "
                 f"network: {executor.network}\n"
             )
+            print(" *** YOU ARE USING BATCH API *** ")
 
             async def tasks():
                 while True:
