@@ -34,7 +34,7 @@ class YagnaErigonManager():
 
     async def close(self):
         tasks = [erigon.stop() for erigon in self.erigons]
-        if self.manager is not None:
-            tasks.append(self.manager.stop())
-
         await asyncio.gather(*tasks)
+
+        if self.manager is not None:
+            await self.manager.stop()
