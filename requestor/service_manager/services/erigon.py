@@ -5,7 +5,7 @@ from .erigon_payload import ErigonPayload
 from yapapi.executor.services import Service
 
 
-class ErigonService(Service):
+class Erigon(Service):
     @classmethod
     async def get_payload(cls):
         return ErigonPayload()

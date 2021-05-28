@@ -12,7 +12,7 @@ RUNNING_RESULT = {
 }
 
 
-class PseudoErigonService(Service):
+class PseudoErigon(Service):
     def post_init(self):
         self._status_call_cnt = 0
 
