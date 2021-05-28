@@ -5,4 +5,4 @@ RUN pip install pytest==6.2.3 requests==2.25.1 pytest-asyncio==0.15.1 httpx==0.1
 
 COPY tests tests
 
-ENTRYPOINT pytest
+ENTRYPOINT ["pytest", "-s", "-v"]

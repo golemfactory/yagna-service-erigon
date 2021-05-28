@@ -7,6 +7,8 @@ BASE_URL = os.environ.get('BASE_URL')
 if BASE_URL and '://' not in BASE_URL:
     BASE_URL = 'http://' + BASE_URL
 
+PROVIDER_CNT = int(os.environ.get('PROVIDER_CNT', '1'))
+
 
 def create_request(method, endpoint, user_id):
     url = os.path.join(BASE_URL, endpoint)
@@ -33,6 +35,7 @@ async def check_data(client, not_started_ids, user_id):
 
 @pytest.mark.asyncio
 @pytest.mark.skipif(not BASE_URL, reason="BASE_URL is required")
+@pytest.mark.skipif(PROVIDER_CNT < 3, reason="Not enough providers")
 async def test_api():
     user_ids = list(range(3))
 
