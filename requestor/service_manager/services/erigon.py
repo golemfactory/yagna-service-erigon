@@ -30,25 +30,26 @@ class ErigonService(Service):
     async def get_payload(cls):
         return ErigonPayload()
 
-    def start(self, ctx):
+    async def start(self):
         #   NOTE: this ctx.run() is not necessary, but without any ctx.run() it seems that
         #   ctx.commit() does nothing and we would deploy only when first status
         #   request comes
-        ctx.run('STATUS')
+        #   TODO this is required only by old API I think? --> move to BatchApiManager
+        self._ctx.run('STATUS')
+        yield self._ctx.commit()
 
-    async def run(self, ctx):
+    async def run(self):
         queue = self.queue
         while True:
             command, requesting_future = await queue.get()
             if command == 'STATUS':
-                ctx.run(command)
+                self._ctx.run(command)
                 try:
-                    processing_future = yield ctx.commit()
+                    processing_future = yield self._ctx.commit()
                     result = self._parse_status_result(processing_future.result())
                     requesting_future.set_result(result)
                 except Exception as e:
                     requesting_future.set_result({'status': f'FAILED: {e}'})
-                    self.disable()
                     break
             elif command == 'STOP':
                 requesting_future.set_result({'status': 'STOPPING'})
@@ -118,7 +119,7 @@ class Erigon():
                 self.runtime_state = RuntimeState('starting')
                 await asyncio.sleep(1)
                 continue
-            
+
             res = await self.status()
             self.runtime_state = RuntimeState(**res)
             if not self.stopped:

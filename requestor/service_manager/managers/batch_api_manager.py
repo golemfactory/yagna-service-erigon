@@ -5,7 +5,6 @@ import asyncio
 async def worker(ctx: WorkContext, tasks):
     task = await tasks.__anext__()
     erigon = task.data
-    erigon._ctx = ctx
 
     if erigon.stopped:
         task.accept_result(result='This erigon was stopped before deployment')
@@ -14,8 +13,7 @@ async def worker(ctx: WorkContext, tasks):
     #   DEPLOYMENT
     service = erigon.service_cls(None, ctx)
     try:
-        service.start(ctx)
-        yield ctx.commit()
+        yield await service.start().__anext__()
     except Exception as e:
         print("DEPLOYMENT FAILED ", e)
         task.reject_result(retry=True)
@@ -24,13 +22,14 @@ async def worker(ctx: WorkContext, tasks):
     erigon.set_service(service)
 
     #   REQUEST PROCESSING
-    run = service.run(ctx)
+    run = service.run()
     try:
         commit = await run.__anext__()
         while True:
             results_future = yield commit
             commit = await run.asend(results_future)
     except StopAsyncIteration:
+        erigon.disable()
         task.accept_result(result='DONE')
 
 
