@@ -1,20 +1,18 @@
 from yapapi.payload import vm
 from yapapi.executor.services import Service
+import asyncio
 
-STARTING_RESULT = {'status': 'starting', 'url': None, 'auth': None}
-RUNNING_RESULT = {
-    'status': 'running',
-    'url': 'www.some.where/erigon:7987',
-    'auth': {
-        'user': 'SECRET_USER',
-        'password': 'SECRET_PASSWORD',
-    }
+URL = 'www.some.where/erigon:7987',
+AUTH = {
+    'user': 'SECRET_USER',
+    'password': 'SECRET_PASSWORD',
 }
 
 
 class PseudoErigon(Service):
     def post_init(self):
-        self._status_call_cnt = 0
+        self.url = None
+        self.auth = None
 
     @classmethod
     async def get_payload(cls):
@@ -30,23 +28,17 @@ class PseudoErigon(Service):
         yield self._ctx.commit()
 
     async def run(self):
+        await asyncio.sleep(3)
+        self.url, self.auth = URL, AUTH
+
         while True:
             service_signal = await self._listen()
             command = service_signal.message
-            if command == 'STATUS':
-                self._ctx.run("/bin/echo", "STATUS")
-                try:
-                    yield self._ctx.commit()
-                    if self._status_call_cnt < 2:
-                        self._respond_nowait(STARTING_RESULT, service_signal)
-                        self._status_call_cnt += 1
-                    else:
-                        self._respond_nowait(RUNNING_RESULT, service_signal)
-                except Exception as e:
-                    result = {'status': f'FAILED: {e}'}
-                    self._respond_nowait(result, service_signal)
-                    break
-            elif command == 'STOP':
+            if command == 'STOP':
                 result = {'status': 'STOPPING'}
                 self._respond_nowait(result, service_signal)
                 break
+
+        #   run() must be a generator so we need a `yield`
+        if False:
+            yield
