@@ -1,6 +1,6 @@
 import asyncio
 
-from service_manager import YagnaErigonManager, services, managers
+from service_manager import YagnaErigonManager, services
 
 
 async def main(yem):
@@ -14,7 +14,7 @@ async def main(yem):
         await asyncio.sleep(1)
 
 if __name__ == '__main__':
-    yem = YagnaErigonManager(managers.ServiceApiManager)
+    yem = YagnaErigonManager()
     try:
         loop = asyncio.get_event_loop()
         main_task = loop.create_task(main(yem))

@@ -1,6 +1,6 @@
 from quart import Quart, request, send_from_directory
 from quart_cors import cors
-from service_manager import YagnaErigonManager, services, managers
+from service_manager import YagnaErigonManager, services
 from collections import defaultdict
 import json
 import asyncio
@@ -21,7 +21,7 @@ class UserDataMissing(Exception):
 
 async def create_yem():
     global yem
-    yem = YagnaErigonManager(manager_cls(), get_config())
+    yem = YagnaErigonManager(get_config())
 
 
 def get_config():
@@ -36,10 +36,6 @@ def erigon_cls():
     erigon_cls_name = os.environ.get('ERIGON_CLASS', 'Erigon')
     erigon_cls = getattr(services, erigon_cls_name)
     return erigon_cls
-
-
-def manager_cls():
-    return managers.BatchApiManager
 
 
 @app.before_serving

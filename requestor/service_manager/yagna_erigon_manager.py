@@ -1,6 +1,7 @@
 import asyncio
 from yapapi.log import enable_default_logger, log_summary, log_event_repr
 from .service_wrapper import ServiceWrapper
+from .yapapi_connector import YapapiConnector
 
 #   NOTE: those are thigs common for Executor/Golem. Other things are hardcoded.
 DEFAULT_EXECUTOR_CFG = {
@@ -11,8 +12,7 @@ DEFAULT_EXECUTOR_CFG = {
 
 
 class YagnaErigonManager():
-    def __init__(self, manager_cls, executor_cfg={}):
-        self.manager_cls = manager_cls
+    def __init__(self, executor_cfg={}):
         self.executor_cfg = DEFAULT_EXECUTOR_CFG.copy()
         self.executor_cfg.update(executor_cfg)
 
@@ -30,7 +30,7 @@ class YagnaErigonManager():
     def _init_manager(self, service_cls):
         #   TODO: create different managers for different service classes
         if self.manager is None:
-            self.manager = self.manager_cls(service_cls, self.executor_cfg)
+            self.manager = YapapiConnector(service_cls, self.executor_cfg)
 
     async def close(self):
         tasks = [erigon.stop() for erigon in self.erigons]

@@ -2,7 +2,7 @@ from yapapi.executor import Golem
 import asyncio
 
 
-class ServiceApiManager():
+class YapapiConnector():
     def __init__(self, service_cls, executor_cfg):
         self.service_cls = service_cls
         self.executor_cfg = executor_cfg
@@ -27,7 +27,6 @@ class ServiceApiManager():
                 f"payment driver: {golem.driver}  "
                 f"network: {golem.network}\n"
             )
-            print(" *** YOU ARE USING SERVICE API *** ")
             while True:
                 data = await self.command_queue.get()
                 if type(data) is str:
