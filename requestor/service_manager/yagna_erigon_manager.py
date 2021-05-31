@@ -23,7 +23,7 @@ class YagnaErigonManager():
     def create_erigon(self, service_cls):
         self._init_manager(service_cls)
         erigon = ServiceWrapper()
-        self.manager.add_instance(erigon)
+        self.manager.create_instance(erigon)
         self.erigons.append(erigon)
         return erigon
 

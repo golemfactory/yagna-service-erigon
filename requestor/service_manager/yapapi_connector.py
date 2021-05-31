@@ -9,15 +9,18 @@ class YapapiConnector():
 
         self.command_queue = asyncio.Queue()
         self.executor_task = asyncio.create_task(self.run())
+        self.run_service_tasks = []
 
-    def add_instance(self, instance):
-        self.command_queue.put_nowait(instance)
+    def create_instance(self, service_wrapper):
+        self.command_queue.put_nowait(service_wrapper)
 
     async def stop(self):
-        #   Remove all sheduled erigons from queue and stop Executor task generator
+        #   Remove all sheduled services from queue and stop Executor task generator
         while not self.command_queue.empty():
             self.command_queue.get_nowait()
         self.command_queue.put_nowait('CLOSE')
+
+        await asyncio.gather(*self.run_service_tasks)
         await self.executor_task
 
     async def run(self):
@@ -33,8 +36,11 @@ class YapapiConnector():
                     assert data == 'CLOSE'
                     break
                 else:
-                    erigon = data
-                    cluster = await golem.run_service(self.service_cls)
-                    while not cluster.instances:
-                        await asyncio.sleep(1)
-                    erigon.set_service(cluster.instances[0])
+                    run_service = asyncio.create_task(self._run_service(golem, data))
+                    self.run_service_tasks.append(run_service)
+
+    async def _run_service(self, golem, service_wrapper):
+        cluster = await golem.run_service(self.service_cls)
+        while not cluster.instances:
+            await asyncio.sleep(0.1)
+        service_wrapper.set_service(cluster.instances[0])
