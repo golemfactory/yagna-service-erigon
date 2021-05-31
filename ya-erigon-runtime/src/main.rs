@@ -137,7 +137,7 @@ impl Runtime for ErigonRuntime {
         ctx: &mut Context<Self>,
     ) -> ProcessIdResponse<'a> {
         let seq = self.seq.fetch_add(1, Relaxed);
-        let emitter = ctx.emitter.clone().unwrap();
+        let mut emitter = ctx.emitter.clone().unwrap();
 
         let (tx, rx) = oneshot::channel();
         let public_addr = ctx
@@ -169,7 +169,6 @@ impl Runtime for ErigonRuntime {
             .as_bytes()
             .to_vec();
 
-            tokio::time::delay_for(std::time::Duration::from_millis(1)).await;
             emitter.command_stdout(seq, stdout).await;
             emitter.command_stopped(seq, 0).await;
         });
