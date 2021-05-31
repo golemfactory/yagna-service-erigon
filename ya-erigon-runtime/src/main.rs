@@ -3,7 +3,6 @@ use futures::FutureExt;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
-use std::iter;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::atomic::AtomicU64;
@@ -43,7 +42,7 @@ impl Default for ErigonConf {
         ErigonConf {
             public_addr: String::from("http://erigon.localhost:8545"),
             data_dir: String::from("/data/turbo-geth"),
-            passwd_tool_path: String::from("/usr/bin/htpasswd"),
+            passwd_tool_path: String::from("htpasswd"),
             passwd_file_path: String::from("/etc/nginx/erigon_htpasswd"),
             password_default_length: 15,
         }
@@ -92,9 +91,9 @@ impl Runtime for ErigonRuntime {
         let path = current_exe_path.parent().unwrap();
 
         // Generate user & password entry with passwd tool
-        let mut rng = thread_rng();
-        let password: String = iter::repeat(())
-            .map(|()| rng.sample(Alphanumeric))
+        let rng = thread_rng();
+        let password: String = rng
+            .sample_iter(Alphanumeric)
             .map(char::from)
             .take(ctx.conf.password_default_length)
             .collect();
