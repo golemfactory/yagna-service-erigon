@@ -61,12 +61,15 @@ async def get_user_id():
 
 
 def erigon_data(erigon):
-    if erigon.stopped:
+    if not erigon.started:
+        status = 'pending'
+    elif erigon.stopped:
         status = 'stopped'
-    elif erigon.started:
-        status = 'running'
     else:
-        status = 'starting'
+        if erigon.service.url is None:
+            status = 'starting'
+        else:
+            status = 'running'
 
     data = {
         'id': erigon.id,
@@ -74,8 +77,8 @@ def erigon_data(erigon):
     }
 
     if status == 'running':
-        data['url'] = erigon.runtime_state.url
-        data['auth'] = erigon.runtime_state.auth
+        data['url'] = erigon.service.url
+        data['auth'] = erigon.service.auth
     return data
 
 

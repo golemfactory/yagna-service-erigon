@@ -6,6 +6,10 @@ from yapapi.executor.services import Service
 
 
 class Erigon(Service):
+    def post_init(self):
+        self.url = None
+        self.auth = None
+
     @classmethod
     async def get_payload(cls):
         return ErigonPayload()
@@ -14,20 +18,17 @@ class Erigon(Service):
         yield self._ctx.commit()
 
     async def run(self):
+        #   Set url & auth
+        self._ctx.run('STATUS')
+        processing_future = yield self._ctx.commit()
+        result = self._parse_status_result(processing_future.result())
+        self.url, self.auth = result['url'], result['auth']
+
+        #   Wait for STOP (TODO: remove this, use cluster.stop()?)
         while True:
             service_signal = await self._listen()
             command = service_signal.message
-            if command == 'STATUS':
-                self._ctx.run(command)
-                try:
-                    processing_future = yield self._ctx.commit()
-                    result = self._parse_status_result(processing_future.result())
-                    self._respond_nowait(result, service_signal)
-                except Exception as e:
-                    result = {'status': f'FAILED: {e}'}
-                    self._respond_nowait(result, service_signal)
-                    break
-            elif command == 'STOP':
+            if command == 'STOP':
                 result = {'status': 'STOPPING'}
                 self._respond_nowait(result, service_signal)
                 break
