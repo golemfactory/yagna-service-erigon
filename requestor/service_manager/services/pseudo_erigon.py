@@ -27,7 +27,6 @@ class PseudoErigon(Service):
         )
 
     async def start(self):
-        self._ctx.run("/bin/echo", "STATUS")
         yield self._ctx.commit()
 
     async def run(self):

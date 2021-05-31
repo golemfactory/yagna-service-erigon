@@ -11,11 +11,6 @@ class Erigon(Service):
         return ErigonPayload()
 
     async def start(self):
-        #   NOTE: this ctx.run() is not necessary, but without any ctx.run() it seems that
-        #   ctx.commit() does nothing and we would deploy only when first status
-        #   request comes
-        #   TODO this is required only by old API I think? --> move to BatchApiManager
-        self._ctx.run('STATUS')
         yield self._ctx.commit()
 
     async def run(self):
@@ -38,7 +33,10 @@ class Erigon(Service):
                 break
 
     def _parse_status_result(self, raw_data):
-        command_executed = raw_data[0]
+        #   NOTE: raw_data contains also output from "start" and "deploy" for the first
+        #         request, and only single row for subsequent requests -> that's why -1 not 0
+        command_executed = raw_data[-1]
+
         stdout = command_executed.stdout
         mock_echo_data, erigon_data = stdout.split('ERIGON: ', 2)
         erigon_data = json.loads(erigon_data)
