@@ -1,6 +1,7 @@
 from quart import Quart, request, send_from_directory
 from quart_cors import cors
-from service_manager import YagnaErigonManager, services
+from service_manager import YagnaErigonManager
+import erigon_services
 from collections import defaultdict
 import json
 import os
@@ -26,7 +27,7 @@ def get_config():
 
 def erigon_cls():
     erigon_cls_name = os.environ.get('ERIGON_CLASS', 'Erigon')
-    erigon_cls = getattr(services, erigon_cls_name)
+    erigon_cls = getattr(erigon_services, erigon_cls_name)
     return erigon_cls
 
 

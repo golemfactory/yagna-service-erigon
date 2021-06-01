@@ -1,12 +1,13 @@
 import asyncio
 
-from service_manager import YagnaErigonManager, services
+from service_manager import YagnaErigonManager
+import erigon_services
 
 from server import erigon_data
 
 
 async def main(yem):
-    erigons = [yem.create_erigon(services.Erigon) for e in range(1)]
+    erigons = [yem.create_erigon(erigon_services.Erigon) for e in range(1)]
     for erigon in erigons:
         print(f"New Erigon starting, id: {erigon.id}")
 
@@ -16,8 +17,8 @@ async def main(yem):
         await asyncio.sleep(1)
 
 if __name__ == '__main__':
-    # yem = YagnaErigonManager()
-    yem = YagnaErigonManager({'subnet_tag': 'ttt2'})
+    yem = YagnaErigonManager()
+    # yem = YagnaErigonManager({'subnet_tag': 'devnet-beta.1'})
     try:
         loop = asyncio.get_event_loop()
         main_task = loop.create_task(main(yem))
