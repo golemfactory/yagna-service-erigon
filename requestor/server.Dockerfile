@@ -5,7 +5,7 @@ WORKDIR /erigon_server/
 #   NOTE: ARG instead of ENV because I don't want this in the final image
 ARG DEBIAN_FRONTEND=noninteractive
 
-ADD https://github.com/golemfactory/yagna/releases/download/pre-rel-v0.6.6-rc1/golem-requestor_pre-rel-v0.6.6-rc1_amd64.deb yagna.deb
+ADD https://github.com/golemfactory/yagna/releases/download/pre-rel-v0.7.0-rc6/golem-requestor_pre-rel-v0.7.0-rc6_amd64.deb yagna.deb
 RUN dpkg-preconfigure ./yagna.deb
 RUN echo "golem-requestor	golem/terms/testnet-01	select	yes" | debconf-set-selections
 RUN apt install -y ./yagna.deb

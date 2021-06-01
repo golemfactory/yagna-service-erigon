@@ -28,9 +28,14 @@ def test_api():
 
     status, data = run_request('GET', 'getInstances')
     assert status == 200
-    assert {'id': erigon_id, 'status': 'running',
-            'url': 'www.some.where/erigon:7987',
-            'auth': {'password': 'SECRET_PASSWORD', 'user': 'SECRET_USER'}} in data
+
+    data = data[-1]
+    assert data['id'] == erigon_id
+    assert data['status'] == 'running'
+    assert 'url' in data
+    assert 'auth' in data
+    assert 'password' in data['auth']
+    assert 'user' in data['auth']
 
     status, data = run_request('POST', f'stopInstance/{erigon_id}')
     assert status == 200
