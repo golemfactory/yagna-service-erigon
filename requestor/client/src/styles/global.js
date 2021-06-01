@@ -18,12 +18,25 @@ const GlobalStyle = createGlobalStyle`
     background-color: #dfdfdf;
     padding: 2rem;
     
-    h1 {
-      font-size: 2rem;
-    }
-    
     p {
       font-size: 1.6rem;
+    }
+    
+    button {
+      font-size: 1.6rem;
+      
+      margin: 2rem;
+    }
+    
+    div {
+      > span {
+        font-size: 1.4rem;
+        margin-right: 1rem;
+      }
+      
+      a {
+       margin-right: 1rem;
+     }
     }
   }
 `;
