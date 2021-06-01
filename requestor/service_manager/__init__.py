@@ -1,2 +1,2 @@
-from .yagna_erigon_manager import YagnaErigonManager
+from .service_manager import ServiceManager
 from .service_wrapper import ServiceWrapper

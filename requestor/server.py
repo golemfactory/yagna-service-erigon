@@ -1,6 +1,6 @@
 from quart import Quart, request, send_from_directory
 from quart_cors import cors
-from service_manager import YagnaErigonManager
+from service_manager import ServiceManager
 import erigon_services
 from collections import defaultdict
 import json
@@ -33,15 +33,15 @@ def erigon_cls():
 
 @app.before_serving
 async def startup():
-    app.yem = YagnaErigonManager(get_config())
+    app.service_manager = ServiceManager(get_config())
 
     #   This is called only to validate the env (or die now)
     erigon_cls()
 
 
 @app.after_serving
-async def close_yagna_erigon_manager():
-    await app.yem.close()
+async def close_service_manager():
+    await app.service_manager.close()
 
 
 async def get_user_id():
@@ -85,7 +85,7 @@ async def get_instances():
 @app.route('/createInstance', methods=['POST'])
 async def create_instance():
     user_id = await get_user_id()
-    erigon = app.yem.create_erigon(erigon_cls())
+    erigon = app.service_manager.create_service(erigon_cls())
     user_erigons[user_id][erigon.id] = erigon
     return erigon_data(erigon), 201
 
