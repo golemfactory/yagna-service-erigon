@@ -4,15 +4,26 @@
 
 apt-get install -y acl
 
-# (don't run it as sudo? Assume binaries go to /home/ubuntu/.local/bin)
-curl -sSf https://join.golem.network/as-provider | YA_INSTALLER_CORE=pre-rel-v0.7.0-rc5 bash -
-
 # setup kvm
 curl -sSf -o setup-kvm.sh https://gist.githubusercontent.com/pnowosie/cf0899c34c7588688b82aedff765c605/raw/cf84388c037bc1852e8b2e0cecc76c5e311cff28/setup-kvm.sh
 chmod +x ./setup-kvm.sh
 sudo ./setup-kvm.sh ubuntu
 
+# Create data dir
+mkdir -p /data/erigon/goerli
+chown -R ubuntu:ubuntu /data/erigon
+
+setfacl -m u:ubuntu:rw /etc/nginx/erigon_htpasswd
+
 mkdir -p /home/ubuntu/.local/lib/yagna/plugins/ya-runtime-erigon
+
+#==================================================================================================
+# Don't run the following as sudo
+curl -sSf https://join.golem.network/as-provider | YA_INSTALLER_CORE=pre-rel-v0.7.0-rc5 bash -
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+# reload .bashrc
+# (run the 'golemsp run --payment-network rinkeby')
+
 
 cat >/home/ubuntu/.local/lib/yagna/plugins/ya-runtime-erigon.json <<EOF
 [
@@ -100,11 +111,5 @@ cat >/home/ubuntu/.local/share/ya-erigon-runtime/ya-erigon-runtime.json <<EOF
 }
 EOF
 
-# Create data dir
-mkdir -p /data/erigon/goerli
-chown -R ubuntu:ubuntu /data/erigon
-
-setfacl -m u:golem:rw /etc/nginx/erigon_htpasswd
-
 # start provider in screen :-)
-# /home/ubuntu/.local/bin/golemsp run --payment-network rinkeby --subnet erigon
+# golemsp run --payment-network rinkeby --subnet erigon
