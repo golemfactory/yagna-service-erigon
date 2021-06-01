@@ -33,7 +33,7 @@ async def main(sm):
         await asyncio.sleep(1)
 
 if __name__ == '__main__':
-    sm = ServiceManager({'subnet_tag': 'devnet-beta.1'})
+    sm = ServiceManager({'subnet_tag': 'devnet-beta.2'})
     try:
         loop = asyncio.get_event_loop()
         main_task = loop.create_task(main(sm))
