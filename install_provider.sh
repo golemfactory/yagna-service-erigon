@@ -7,13 +7,51 @@ die() {
 
 [[ "$(id -u)" == 0 ]] || die "Please run as root"
 
+if [[ -z "$ERIGON_USER" ]]; then
+    read -r -p "user [default: golem]: " ERIGON_USER
+    [[ -z "$ERIGON_USER" ]] && ERIGON_USER=golem
+fi
+
+if [[ -z "$ERIGON_DATADIR" ]]; then
+    read -r -p "erigon datadir [default: /data/erigon]: " ERIGON_DATADIR
+    [[ -z "$ERIGON_DATADIR" ]] && ERIGON_DATADIR=/data/erigon
+fi
+
 if [[ -z "$ERIGON_HOSTNAME" ]]; then
     read -r -p "hostname: " ERIGON_HOSTNAME
 fi
 
+# set ERIGON_DISABLE_SSL=y to test this script without nagging letsencrypt services
+# ERIGON_USE_SSL is an inverse of ERIGON_DISABLE_SSL.
+[[ -z "$ERIGON_DISABLE_SSL" ]] && ERIGON_USE_SSL=y
+
+apt-get update
+
+# ========= user =========
+
+# create kvm group if not exists
+if ! getent group kvm >/dev/null 2>/dev/null; then
+    # on ubuntu <= 18.04 this package setups kvm group and access to /dev/kvm
+    apt-get install -y qemu-system-common
+fi
+
+# create user if not exists
+if ! id -u "$ERIGON_USER" >/dev/null 2>/dev/null; then
+    useradd -m -s /bin/bash -G kvm -U "$ERIGON_USER" || die "failed to create user"
+fi
+
+# add user to kvm group if doesn't already belong
+if ! id -nGz "$ERIGON_USER" | grep -qzxF kvm; then
+    adduser "$ERIGON_USER" kvm
+fi
+
+# because someone might use already existing user with HOME set to /var/lib/${ERIGON_USER}
+ERIGON_USER_HOME="$(getent passwd "$ERIGON_USER" | cut -d: -f 6)"
+[[ -z "$ERIGON_USER_HOME" ]] && die "failed to get ${ERIGON_USER} home dir"
+
 # ========= nginx & certbot =========
 
-apt-get install -y nginx certbot apache2-utils
+apt-get install -y acl nginx certbot apache2-utils || die "failed to install dependencies"
 
 # stop nginx to leave port 80 for certbot standalone
 systemctl stop nginx
@@ -21,14 +59,16 @@ systemctl stop nginx
 [[ -f /etc/nginx/dhparam.pem ]] || \
     openssl dhparam -out /etc/nginx/dhparam.pem 2048
 
-if [[ ! -f /etc/letsencrypt/live/$ERIGON_HOSTNAME/fullchain.pem ]]; then
+if [[ "$ERIGON_USE_SSL" == y && ! -f /etc/letsencrypt/live/$ERIGON_HOSTNAME/fullchain.pem ]]; then
     if [[ -z "$ERIGON_EMAIL" ]]; then
         read -r -p "email (for certbot): " ERIGON_EMAIL
     fi
 
-    certbot certonly --standalone -d "$ERIGON_HOSTNAME" --email "$ERIGON_EMAIL" -n --agree-tos --force-renewal
+    certbot certonly --standalone -d "$ERIGON_HOSTNAME" --email "$ERIGON_EMAIL" -n --agree-tos --force-renewal \
+        || die "failed to get certificate"
 fi
 
+mkdir -p /etc/letsencrypt/renewal-hooks/post/
 cat >/etc/letsencrypt/renewal-hooks/post/nginx-reload.sh <<EOF
 #!/bin/bash
 nginx -t && systemctl reload nginx
@@ -36,8 +76,7 @@ EOF
 chmod +x /etc/letsencrypt/renewal-hooks/post/nginx-reload.sh
 
 touch /etc/nginx/erigon_htpasswd
-# TODO: give access to golem user to modify passwords
-# setfacl -m u:golem:rw /etc/nginx/erigon_htpasswd
+setfacl -m "u:${ERIGON_USER}:rw" /etc/nginx/erigon_htpasswd
 
 cat >/etc/systemd/system/reload-nginx.path <<EOF
 [Unit]
@@ -133,14 +172,14 @@ http {
 
     # example.com
     server {
-        listen                               8545 ssl http2;
-        listen                               [::]:8545 ssl http2;
+        listen                               8545${ERIGON_USE_SSL:+ ssl http2};
+        listen                               [::]:8545${ERIGON_USE_SSL:+ ssl http2};
         server_name                          $ERIGON_HOSTNAME;
 
-        # SSL
-        ssl_certificate                      /etc/letsencrypt/live/$ERIGON_HOSTNAME/fullchain.pem;
-        ssl_certificate_key                  /etc/letsencrypt/live/$ERIGON_HOSTNAME/privkey.pem;
-        ssl_trusted_certificate              /etc/letsencrypt/live/$ERIGON_HOSTNAME/chain.pem;
+        ${ERIGON_USE_SSL:# SSL}
+        ${ERIGON_USE_SSL:+ssl_certificate                      /etc/letsencrypt/live/$ERIGON_HOSTNAME/fullchain.pem;}
+        ${ERIGON_USE_SSL:+ssl_certificate_key                  /etc/letsencrypt/live/$ERIGON_HOSTNAME/privkey.pem;}
+        ${ERIGON_USE_SSL:+ssl_trusted_certificate              /etc/letsencrypt/live/$ERIGON_HOSTNAME/chain.pem;}
 
         # security headers
         add_header X-XSS-Protection          "1; mode=block" always;
@@ -187,3 +226,69 @@ EOF
 nginx -t || die "nginx doesn't like it's config"
 systemctl restart nginx
 systemctl enable --now reload-nginx.path
+
+# ========= yagna =========
+
+# install erigon runtime before yagna itself
+mkdir -p "${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-erigon"
+cat >"${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-erigon.json" <<EOF
+[
+  {
+    "name": "erigon",
+    "version": "0.1.0",
+    "supervisor-path": "exe-unit",
+    "runtime-path": "ya-runtime-erigon/ya-erigon-runtime",
+    "description": "Service wrapper for Erigon (formelly Turbo-Geth)",
+    "extra-args": ["--runtime-managed-image"]
+  }
+]
+EOF
+curl -sSfL https://github.com/golemfactory/yagna-service-erigon/releases/download/3deaadc/ya-erigon-runtime.tar.gz \
+    | tar -xzf - -C "${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-erigon" \
+    || die "failed to install erigon runtime"
+
+mkdir -p "${ERIGON_DATADIR}/goerli"
+mkdir -p "${ERIGON_USER_HOME}/.local/share/ya-erigon-runtime"
+
+cat >"${ERIGON_USER_HOME}/.local/share/ya-erigon-runtime/ya-erigon-runtime.json" <<EOF
+{
+  "public_addr": "https://${ERIGON_HOSTNAME}:8545",
+  "data_dir": "${ERIGON_DATADIR}",
+  "passwd_tool_path": "htpasswd",
+  "passwd_file_path": "/etc/nginx/erigon_htpasswd",
+  "password_default_length": 15
+}
+EOF
+
+chown -R "${ERIGON_USER}:${ERIGON_USER}" \
+    "${ERIGON_DATADIR}" \
+    "${ERIGON_USER_HOME}/.local/lib/yagna" \
+    "${ERIGON_USER_HOME}/.local/share/ya-erigon-runtime"
+
+# install yagna
+curl -sSf https://join.golem.network/as-provider \
+    | sudo -i -u "$ERIGON_USER" -- env YA_INSTALLER_CORE=pre-rel-v0.7.0-rc6 bash -
+# for some reason even on success installer exits with code 1
+
+sudo -i -u golem ya-provider preset deactivate wasmtime
+sudo -i -u golem ya-provider preset deactivate vm
+
+# install systemd service
+cat >/etc/systemd/system/golem.service <<EOF
+[Unit]
+Description=golem
+After=network.target
+
+[Service]
+Type=simple
+User=${ERIGON_USER}
+Environment=PATH=${ERIGON_USER_HOME}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=${ERIGON_USER_HOME}/.local/bin/golemsp run --payment-network rinkeby
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now golem.service
