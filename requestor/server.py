@@ -3,7 +3,6 @@ from quart_cors import cors
 from service_manager import YagnaErigonManager, services
 from collections import defaultdict
 import json
-import asyncio
 import os
 
 app = Quart(__name__)
@@ -12,16 +11,9 @@ cors(app)
 
 user_erigons = defaultdict(dict)
 
-yem = None
-
 
 class UserDataMissing(Exception):
     pass
-
-
-async def create_yem():
-    global yem
-    yem = YagnaErigonManager(get_config())
 
 
 def get_config():
@@ -40,8 +32,7 @@ def erigon_cls():
 
 @app.before_serving
 async def startup():
-    loop = asyncio.get_event_loop()
-    loop.create_task(create_yem())
+    app.yem = YagnaErigonManager(get_config())
 
     #   This is called only to validate the env (or die now)
     erigon_cls()
@@ -49,7 +40,7 @@ async def startup():
 
 @app.after_serving
 async def close_yagna_erigon_manager():
-    await yem.close()
+    await app.yem.close()
 
 
 async def get_user_id():
@@ -93,7 +84,7 @@ async def get_instances():
 @app.route('/createInstance', methods=['POST'])
 async def create_instance():
     user_id = await get_user_id()
-    erigon = yem.create_erigon(erigon_cls())
+    erigon = app.yem.create_erigon(erigon_cls())
     user_erigons[user_id][erigon.id] = erigon
     return erigon_data(erigon), 201
 
