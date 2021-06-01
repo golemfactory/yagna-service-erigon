@@ -3,6 +3,12 @@ from yapapi.log import enable_default_logger, log_summary, log_event_repr
 from .service_wrapper import ServiceWrapper
 from .yapapi_connector import YapapiConnector
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Type
+    from yapapi.executor.services import Service
+
+
 DEFAULT_EXECUTOR_CFG = {
     'budget': 1.0,
     'subnet_tag': 'ttt2',
@@ -20,7 +26,7 @@ class ServiceManager():
 
         enable_default_logger(log_file='log.log')
 
-    def create_service(self, service_cls):
+    def create_service(self, service_cls: 'Type[Service]'):
         service_wrapper = ServiceWrapper(service_cls)
         self.yapapi_connector.create_instance(service_wrapper)
         self.service_wrappers.append(service_wrapper)

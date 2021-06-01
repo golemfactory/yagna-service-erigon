@@ -1,14 +1,19 @@
 import uuid
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Type
+    from yapapi.executor.services import Service
+
 
 class ServiceWrapper():
-    def __init__(self, service_cls):
+    def __init__(self, service_cls: 'Type[Service]'):
         self.service_cls = service_cls
         self.id = self._create_id()
         self.stopped = False
         self.service = None
 
-    def set_service(self, service):
+    def set_service(self, service: 'Service'):
         self.service = service
 
     @property
@@ -24,7 +29,7 @@ class ServiceWrapper():
         if self.started:
             self.service._cluster.stop()
 
-    async def run_single_command(self, cmd):
+    async def run_single_command(self, cmd: str):
         self.service.send_message_nowait(cmd)
         service_signal = await self.service.receive_message()
         #   TODO: how do we check if we got response for the signal sent?

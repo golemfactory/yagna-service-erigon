@@ -1,16 +1,20 @@
 from yapapi.executor import Golem
 import asyncio
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .service_wrapper import ServiceWrapper
+
 
 class YapapiConnector():
-    def __init__(self, executor_cfg):
+    def __init__(self, executor_cfg: dict):
         self.executor_cfg = executor_cfg
 
         self.command_queue = asyncio.Queue()
         self.run_service_tasks = []
         self.executor_task = None
 
-    def create_instance(self, service_wrapper):
+    def create_instance(self, service_wrapper: 'ServiceWrapper'):
         if self.executor_task is None:
             self.executor_task = asyncio.create_task(self.run())
         self.command_queue.put_nowait(service_wrapper)
@@ -42,7 +46,7 @@ class YapapiConnector():
                     run_service = asyncio.create_task(self._run_service(golem, data))
                     self.run_service_tasks.append(run_service)
 
-    async def _run_service(self, golem, service_wrapper):
+    async def _run_service(self, golem: Golem, service_wrapper: 'ServiceWrapper'):
         cluster = await golem.run_service(service_wrapper.service_cls)
         while not cluster.instances:
             await asyncio.sleep(0.1)
