@@ -1,4 +1,5 @@
 import json
+import asyncio
 
 from .erigon_payload import ErigonPayload
 
@@ -14,9 +15,6 @@ class Erigon(Service):
     async def get_payload(cls):
         return ErigonPayload()
 
-    async def start(self):
-        yield self._ctx.commit()
-
     async def run(self):
         #   Set url & auth
         self._ctx.run('STATUS')
@@ -24,14 +22,11 @@ class Erigon(Service):
         result = self._parse_status_result(processing_future.result())
         self.url, self.auth = result['url'], result['auth']
 
-        #   Wait for STOP (TODO: remove this, use cluster.stop()?)
-        while True:
-            service_signal = await self._listen()
-            command = service_signal.message
-            if command == 'STOP':
-                result = {'status': 'STOPPING'}
-                self._respond_nowait(result, service_signal)
-                break
+        #   Wait forever
+        await asyncio.sleep(9999999999999999)
+
+        #   This function must be a generator, so we need a yield
+        yield
 
     def _parse_status_result(self, raw_data):
         #   NOTE: raw_data contains also output from "start" and "deploy" for the first

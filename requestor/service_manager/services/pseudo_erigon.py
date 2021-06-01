@@ -24,21 +24,9 @@ class PseudoErigon(Service):
             min_storage_gib=2.0,
         )
 
-    async def start(self):
-        yield self._ctx.commit()
-
     async def run(self):
         await asyncio.sleep(3)
         self.url, self.auth = URL, AUTH
 
-        while True:
-            service_signal = await self._listen()
-            command = service_signal.message
-            if command == 'STOP':
-                result = {'status': 'STOPPING'}
-                self._respond_nowait(result, service_signal)
-                break
-
-        #   run() must be a generator so we need a `yield`
-        if False:
-            yield
+        await asyncio.sleep(9999999999999999)
+        yield

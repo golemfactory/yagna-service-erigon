@@ -17,18 +17,11 @@ class ServiceWrapper():
     async def stop(self):
         if self.stopped:
             return
-
-        self.disable()
-        if self.started:
-            return await self.run_single_command('STOP')
-        else:
-            return "not started yet"
-
-    def disable(self):
-        if self.stopped:
-            return
         self.stopped = True
         print(f"STOPPING {self}")
+
+        if self.started:
+            self.service._cluster.stop()
 
     async def run_single_command(self, cmd):
         self.service.send_message_nowait(cmd)
