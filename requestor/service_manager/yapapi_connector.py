@@ -3,16 +3,17 @@ import asyncio
 
 
 class YapapiConnector():
-    def __init__(self, service_cls, executor_cfg):
-        self.service_cls = service_cls
+    def __init__(self, executor_cfg):
         self.executor_cfg = executor_cfg
 
         self.command_queue = asyncio.Queue()
-        self.executor_task = asyncio.create_task(self.run())
         self.run_service_tasks = []
+        self.executor_task = None
 
-    def create_instance(self, service_wrapper):
-        self.command_queue.put_nowait(service_wrapper)
+    def create_instance(self, service_wrapper, service_cls):
+        if self.executor_task is None:
+            self.executor_task = asyncio.create_task(self.run())
+        self.command_queue.put_nowait((service_wrapper, service_cls))
 
     async def stop(self):
         #   Remove all sheduled services from queue and stop Executor task generator
@@ -38,11 +39,12 @@ class YapapiConnector():
                     assert data == 'CLOSE'
                     break
                 else:
-                    run_service = asyncio.create_task(self._run_service(golem, data))
+                    service_wrapper, service_cls = data
+                    run_service = asyncio.create_task(self._run_service(golem, service_wrapper, service_cls))
                     self.run_service_tasks.append(run_service)
 
-    async def _run_service(self, golem, service_wrapper):
-        cluster = await golem.run_service(self.service_cls)
+    async def _run_service(self, golem, service_wrapper, service_cls):
+        cluster = await golem.run_service(service_cls)
         while not cluster.instances:
             await asyncio.sleep(0.1)
         service_wrapper.set_service(cluster.instances[0])
