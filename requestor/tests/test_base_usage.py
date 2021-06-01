@@ -22,7 +22,7 @@ def test_api():
     status, data = run_request('POST', 'createInstance')
     assert status == 201
     erigon_id = data['id']
-    assert data == {'status': 'starting', 'id': erigon_id}
+    assert data == {'status': 'pending', 'id': erigon_id}
 
     sleep(25)
 
