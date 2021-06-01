@@ -2,7 +2,7 @@ from yapapi.payload import vm
 from yapapi.executor.services import Service
 import asyncio
 
-URL = 'www.some.where/erigon:7987',
+URL = 'www.some.where/erigon:7987'
 AUTH = {
     'user': 'SECRET_USER',
     'password': 'SECRET_PASSWORD',
