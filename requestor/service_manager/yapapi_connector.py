@@ -20,7 +20,9 @@ class YapapiConnector():
             self.command_queue.get_nowait()
         self.command_queue.put_nowait('CLOSE')
 
-        await asyncio.gather(*self.run_service_tasks)
+        for task in self.run_service_tasks:
+            task.cancel()
+
         await self.executor_task
 
     async def run(self):
