@@ -3,7 +3,7 @@ from yapapi.props import inf
 from yapapi.props.base import constraint
 from yapapi.payload import Payload
 
-ERIGON_RUNTIME_NAME = "ttt"
+ERIGON_RUNTIME_NAME = "erigon"
 
 
 @dataclass
