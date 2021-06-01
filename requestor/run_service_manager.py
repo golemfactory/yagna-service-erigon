@@ -21,7 +21,9 @@ def state(service_wrapper):
 
 async def main(sm):
     service_cnt = 2
-    services = [sm.create_service(erigon_services.PseudoErigon) for _ in range(service_cnt)]
+    service_cls = erigon_services.PseudoErigon   # this runs on devnet and pretends to be an Erigon
+    services = [sm.create_service(service_cls) for _ in range(service_cnt)]
+
     for service in services:
         print(f"New service starting: {service}")
 
