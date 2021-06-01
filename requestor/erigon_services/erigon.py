@@ -5,6 +5,10 @@ from .erigon_payload import ErigonPayload
 
 from yapapi.executor.services import Service
 
+from typing import List, TYPE_CHECKING
+if TYPE_CHECKING:
+    from yapapi.executor.events import CommandExecuted
+
 
 class Erigon(Service):
     def post_init(self):
@@ -28,7 +32,7 @@ class Erigon(Service):
         #   This function must be a generator, so we need a yield
         yield
 
-    def _parse_status_result(self, raw_data):
+    def _parse_status_result(self, raw_data: 'List[CommandExecuted]'):
         #   NOTE: raw_data contains also output from "start" and "deploy" for the first
         #         request, and only single row for subsequent requests -> that's why -1 not 0
         command_executed = raw_data[-1]
