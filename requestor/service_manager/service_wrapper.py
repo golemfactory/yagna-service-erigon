@@ -2,7 +2,8 @@ import uuid
 
 
 class ServiceWrapper():
-    def __init__(self):
+    def __init__(self, service_cls):
+        self.service_cls = service_cls
         self.id = self._create_id()
         self.stopped = False
         self.service = None
@@ -34,4 +35,5 @@ class ServiceWrapper():
         return uuid.uuid4().hex
 
     def __repr__(self):
-        return f"{type(self).__name__}[id={self.id}]"
+        name = self.service_cls.__name__
+        return f"{name}[id={self.id}]"
