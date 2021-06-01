@@ -91,6 +91,7 @@ cat >/home/ubuntu/.local/share/ya-provider/presets.json <<EOF
 EOF
 
 
+mkdir /home/ubuntu/.local/lib/yagna/plugins/ya-runtime-erigon
 curl -LSf -o ya-erigon-runtime.tar.gz https://github.com/golemfactory/yagna-service-erigon/releases/download/3deaadc/ya-erigon-runtime.tar.gz
 tar xvzf ya-erigon-runtime.tar.gz -C /home/ubuntu/.local/lib/yagna/plugins/ya-runtime-erigon
 
