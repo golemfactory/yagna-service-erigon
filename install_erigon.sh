@@ -92,7 +92,7 @@ fi
 
 cat >/home/ubuntu/.local/share/ya-erigon-runtime/ya-erigon-runtime.json <<EOF
 {
-  "public_addr": "http://${ERIGON_HOSTNAME}:8545",
+  "public_addr": "https://${ERIGON_HOSTNAME}:8545",
   "data_dir": "/data/erigon",
   "passwd_tool_path": "htpasswd",
   "passwd_file_path": "/etc/nginx/erigon_htpasswd",
@@ -102,11 +102,9 @@ EOF
 
 # Create data dir
 mkdir -p /data/erigon/goerli
-chown ubuntu:ubuntu /data/erigon
-chown ubuntu:ubuntu /data/erigon/goerli
-
+chown -R ubuntu:ubuntu /data/erigon
 
 setfacl -m u:golem:rw /etc/nginx/erigon_htpasswd
 
 # start provider in screen :-)
-/home/ubuntu/.local/bin/golemsp run --payment-network rinkeby --subnet erigon
+# /home/ubuntu/.local/bin/golemsp run --payment-network rinkeby --subnet erigon
