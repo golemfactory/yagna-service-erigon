@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 DEFAULT_EXECUTOR_CFG = {
     'budget': 1.0,
-    'subnet_tag': 'ttt2',
+    'subnet_tag': 'erigon',
     'event_consumer': log_summary(log_event_repr),
 }
 
