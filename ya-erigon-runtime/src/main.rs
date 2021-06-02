@@ -1,5 +1,7 @@
 use futures::channel::oneshot;
 use futures::FutureExt;
+use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::process::Stdio;
@@ -8,29 +10,43 @@ use std::sync::atomic::Ordering::Relaxed;
 use tokio::process::{Child, Command};
 use ya_runtime_sdk::*;
 
+const AUTH_ERIGON_USER: &str = "erigolem";
 const ERIGON_BIN: &str = "tg";
 const RPCDAEMON_BIN: &str = "rpcdaemon";
 
 //TODO: Make parameter list configurable for further extendability (Erigon & Rpcdaemon)
-const RPCDAEMON_PARAMS: &[&str; 12] = &[
+const RPCDAEMON_PARAMS: &[&str; 10] = &[
     "--private.api.addr",
     "localhost:9090",
     "--http.addr",
-    "0.0.0.0",
+    "127.0.0.1",
     "--http.port",
     "8545",
     "--http.vhosts",
-    "*",
-    "--http.corsdomain",
     "*",
     "--http.api",
     "eth,debug,net,trace,web3,tg",
 ];
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct ErigonConf {
-    public_addr: Option<String>,
-    data_dir: Option<String>,
+    public_addr: String,
+    data_dir: String,
+    passwd_tool_path: String,
+    passwd_file_path: String,
+    password_default_length: usize,
+}
+
+impl Default for ErigonConf {
+    fn default() -> Self {
+        ErigonConf {
+            public_addr: String::from("http://erigon.localhost:8545"),
+            data_dir: String::from("/data/turbo-geth"),
+            passwd_tool_path: String::from("htpasswd"),
+            passwd_file_path: String::from("/etc/nginx/erigon_htpasswd"),
+            password_default_length: 15,
+        }
+    }
 }
 
 #[derive(Default, RuntimeDef)]
@@ -39,18 +55,14 @@ pub struct ErigonRuntime {
     seq: AtomicU64,
     erigon_pid: Option<Child>,
     rpcdaemon_pid: Option<Child>,
+    erigon_password: Option<String>,
 }
 
 impl Runtime for ErigonRuntime {
     const MODE: RuntimeMode = RuntimeMode::Server;
 
     fn deploy<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
-        let data_dir_path = PathBuf::from(
-            ctx.conf
-                .data_dir
-                .clone()
-                .expect("Configuration data_dir is missing"),
-        );
+        let data_dir_path = PathBuf::from(ctx.conf.data_dir.clone());
         let parent_data_dir = data_dir_path.as_path();
         if !(parent_data_dir.exists() && parent_data_dir.is_dir()) {
             panic!(
@@ -78,13 +90,24 @@ impl Runtime for ErigonRuntime {
         let current_exe_path = std::env::current_exe().unwrap();
         let path = current_exe_path.parent().unwrap();
 
-        let data_dir_path = prepare_data_dir_path(
-            &ctx.conf
-                .data_dir
-                .clone()
-                .expect("Configuration data_dir is missing"),
-            &chain_id,
-        );
+        // Generate user & password entry with passwd tool
+        let rng = thread_rng();
+        let password: String = rng
+            .sample_iter(Alphanumeric)
+            .map(char::from)
+            .take(ctx.conf.password_default_length)
+            .collect();
+
+        let _ = generate_password_file(
+            &ctx.conf.passwd_tool_path,
+            &ctx.conf.passwd_file_path,
+            &password,
+        )
+        .expect("Unable to create passwd file");
+        self.erigon_password = Some(password);
+
+        // Spawn erigon processes
+        let data_dir_path = prepare_data_dir_path(&ctx.conf.data_dir.clone(), &chain_id);
         let mut erigon_pid = spawn_process(
             &mut Command::new(&path.join(ERIGON_BIN))
                 .arg("--chain")
@@ -140,11 +163,8 @@ impl Runtime for ErigonRuntime {
         let emitter = ctx.emitter.clone().unwrap();
 
         let (tx, rx) = oneshot::channel();
-        let public_addr = ctx
-            .conf
-            .public_addr
-            .clone()
-            .unwrap_or(String::from("unknown erigon address"));
+        let public_addr = ctx.conf.public_addr.clone();
+        let password = self.erigon_password.clone();
 
         tokio::task::spawn_local(async move {
             // command execution started
@@ -157,8 +177,8 @@ impl Runtime for ErigonRuntime {
                     "status": "running",
                     "url": public_addr,
                     "auth": {
-                        "user": "<BASIC-AUTH-USER>",
-                        "password": "<BASIC-AUTH-PASS>"
+                        "user": AUTH_ERIGON_USER,
+                        "password": password
                     }
                 }
             );
@@ -210,4 +230,19 @@ fn spawn_process(cmd: &mut Command, datadir: &PathBuf, params: &[&str]) -> std::
 
 fn prepare_data_dir_path(parent_dir: &String, chain_id: &String) -> PathBuf {
     PathBuf::from(parent_dir).join(chain_id)
+}
+
+fn generate_password_file(
+    passwd_bin: &String,
+    passwd_file: &String,
+    password: &String,
+) -> std::io::Result<Child> {
+    Command::new(passwd_bin)
+        .arg("-cb")
+        .arg(passwd_file)
+        .arg(AUTH_ERIGON_USER)
+        .arg(password)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
 }
