@@ -19,10 +19,10 @@ def state(service_wrapper):
     return status
 
 
-async def main(sm):
-    service_cnt = 2
+async def main(service_manager):
+    service_cnt = 1
     service_cls = erigon_services.PseudoErigon   # this runs on devnet and pretends to be an Erigon
-    services = [sm.create_service(service_cls) for _ in range(service_cnt)]
+    services = [service_manager.create_service(service_cls) for _ in range(service_cnt)]
 
     for service in services:
         print(f"New service starting: {service}")
@@ -33,12 +33,12 @@ async def main(sm):
         await asyncio.sleep(1)
 
 if __name__ == '__main__':
-    sm = ServiceManager({'subnet_tag': 'devnet-beta.2'})
+    service_manager = ServiceManager({'subnet_tag': 'devnet-beta.2'})
     try:
         loop = asyncio.get_event_loop()
-        main_task = loop.create_task(main(sm))
+        main_task = loop.create_task(main(service_manager))
         loop.run_until_complete(main_task)
     except KeyboardInterrupt:
-        shutdown = loop.create_task(sm.close())
+        shutdown = loop.create_task(service_manager.close())
         loop.run_until_complete(shutdown)
         main_task.cancel()

@@ -27,6 +27,7 @@ class ServiceWrapper():
         print(f"STOPPING {self}")
 
         if self.started:
+            #   TODO: stop using a private field
             self.service._cluster.stop()
 
     async def run_single_command(self, cmd: str):

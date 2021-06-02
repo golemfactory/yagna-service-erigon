@@ -5,8 +5,9 @@ from .erigon_payload import ErigonPayload
 
 from yapapi.executor.services import Service
 
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from typing import List
     from yapapi.executor.events import CommandExecuted
 
 
@@ -26,11 +27,8 @@ class Erigon(Service):
         result = self._parse_status_result(processing_future.result())
         self.url, self.auth = result['url'], result['auth']
 
-        #   Wait forever
-        await asyncio.sleep(9999999999999999)
-
-        #   This function must be a generator, so we need a yield
-        yield
+        #   Wait forever, because Service is stopped when run ends
+        await asyncio.Future()
 
     def _parse_status_result(self, raw_data: 'List[CommandExecuted]'):
         #   NOTE: raw_data contains also output from "start" and "deploy" for the first

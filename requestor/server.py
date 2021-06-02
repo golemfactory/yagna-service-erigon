@@ -10,7 +10,10 @@ app = Quart(__name__)
 cors(app)
 
 
-user_erigons = defaultdict(dict)
+app.user_erigons = defaultdict(dict)
+
+
+ERIGON_CLS = getattr(erigon_services, os.environ.get('ERIGON_CLASS', 'Erigon'))
 
 
 class UserDataMissing(Exception):
@@ -25,18 +28,9 @@ def get_config():
     return cfg
 
 
-def erigon_cls():
-    erigon_cls_name = os.environ.get('ERIGON_CLASS', 'Erigon')
-    erigon_cls = getattr(erigon_services, erigon_cls_name)
-    return erigon_cls
-
-
 @app.before_serving
 async def startup():
     app.service_manager = ServiceManager(get_config())
-
-    #   This is called only to validate the env (or die now)
-    erigon_cls()
 
 
 @app.after_serving
@@ -45,10 +39,10 @@ async def close_service_manager():
 
 
 async def get_user_id():
+    data = await request.json
     try:
-        data = await request.json
         return data['user_id']
-    except Exception:
+    except KeyError:
         raise UserDataMissing
 
 
@@ -77,7 +71,7 @@ def erigon_data(erigon):
 @app.route('/getInstances', methods=['POST'])
 async def get_instances():
     user_id = await get_user_id()
-    erigons = list(user_erigons[user_id].values())
+    erigons = list(app.user_erigons[user_id].values())
     data = [erigon_data(erigon) for erigon in erigons]
     return json.dumps(data), 200
 
@@ -85,8 +79,8 @@ async def get_instances():
 @app.route('/createInstance', methods=['POST'])
 async def create_instance():
     user_id = await get_user_id()
-    erigon = app.service_manager.create_service(erigon_cls())
-    user_erigons[user_id][erigon.id] = erigon
+    erigon = app.service_manager.create_service(ERIGON_CLS)
+    app.user_erigons[user_id][erigon.id] = erigon
     return erigon_data(erigon), 201
 
 
@@ -94,9 +88,9 @@ async def create_instance():
 async def stop_instance(erigon_id):
     user_id = await get_user_id()
     try:
-        this_user_erigons = user_erigons[user_id]
+        this_user_erigons = app.user_erigons[user_id]
     except KeyError:
-        return 'Invalid user_id', 401
+        return 'Invalid user_id', 403
 
     try:
         erigon = this_user_erigons[erigon_id]
