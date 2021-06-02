@@ -914,20 +914,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ya-erigon-runtime"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures",
- "local_ipaddress",
- "rand",
- "serde",
- "structopt",
- "tokio",
- "ya-runtime-sdk",
-]
-
-[[package]]
 name = "ya-runtime-api"
 version = "0.2.1"
 source = "git+https://github.com/golemfactory/yagna.git?rev=3d0bee5c12ce64bdb68f11c765f77eab762984ab#3d0bee5c12ce64bdb68f11c765f77eab762984ab"
@@ -942,6 +928,20 @@ dependencies = [
  "serde_json",
  "tokio",
  "tokio-util",
+]
+
+[[package]]
+name = "ya-runtime-erigon"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "futures",
+ "local_ipaddress",
+ "rand",
+ "serde",
+ "structopt",
+ "tokio",
+ "ya-runtime-sdk",
 ]
 
 [[package]]
