@@ -20,7 +20,7 @@ def create_request(method, endpoint, user_id):
 
 
 async def check_data(client, not_started_ids, user_id):
-    req = create_request('GET', 'getInstances', user_id)
+    req = create_request('POST', 'getInstances', user_id)
     res = await client.send(req)
     assert res.status_code == 200
     data = res.json()[-1]

@@ -34,7 +34,7 @@ NOTE: tests might *sometimes* fail with a slow/unreliable provider. Please repea
 
 All requests except static file request must contain a JSON body with 'user\_id': 'the\_thing\_from\_metamask'.
 
-    GET  /getInstances      - list of all instances created by the user (includes stopped instances)
+    POST /getInstances      - list of all instances created by the user (includes stopped instances)
     POST /createInstance    - create new instance (this *should* use some config data from body, but 
                               currently everything except 'user_id' is ignored)
     POST /stopInstance/<id> - stop instance with id <id>
