@@ -1,5 +1,5 @@
 Quart==0.15.1
 quart-cors==0.5.0
 
-#   NOTE: This is (currently) replaced with a repo-based dev version
-yapapi==0.5.5 
+#   TODO - wait for yapapi release
+git+git://github.com/golemfactory/yapapi@master#egg=yapapi
