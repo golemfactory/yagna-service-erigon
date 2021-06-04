@@ -1,8 +1,8 @@
 import { StrictMode } from 'react';
 import ReactDOM from 'react-dom';
 import { Web3ReactProvider } from '@web3-react/core';
-import getLibrary from './utils/library';
-import App from './app/App';
+import getLibrary from 'utils/library';
+import App from 'app/App';
 
 ReactDOM.render(
   <StrictMode>

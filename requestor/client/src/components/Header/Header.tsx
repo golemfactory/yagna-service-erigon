@@ -1,6 +1,6 @@
 import { useWeb3React } from '@web3-react/core';
 
-const Header = ({ metamask }) => {
+const Header = ({ metamask }: { metamask: boolean }) => {
   const { active } = useWeb3React();
 
   return (

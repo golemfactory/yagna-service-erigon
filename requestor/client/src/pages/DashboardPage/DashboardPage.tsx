@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWeb3React } from '@web3-react/core';
-import httpRequest from '../../utils/httpRequest';
+import httpRequest from 'utils/httpRequest';
 
 const DashboardPage = () => {
   const [nodes, setNodes] = useState([]);
-  const [error, setError] = useState(undefined);
+  const [error, setError] = useState<string | undefined>(undefined);
 
   const { account } = useWeb3React();
 
@@ -43,7 +43,7 @@ const DashboardPage = () => {
       .then(() => handleFetchNodes())
       .catch(handleError);
 
-  const handleStopNode = (id) =>
+  const handleStopNode = (id: string) =>
     httpRequest({ path: 'stopInstance', id, data })
       .then(() => handleFetchNodes())
       .catch(handleError);
@@ -54,26 +54,38 @@ const DashboardPage = () => {
         Start your node
       </button>
       {!!nodes.length ? (
-        nodes.map(({ id, status, url, auth }) => (
-          <div key={id}>
-            <span>{id}</span>
-            <a href={url} target="_blank" rel="noopener noreferrer">
-              {url}
-            </a>
-            {auth && (
-              <>
-                <span>{auth.user}</span>
-                <span>{auth.password}</span>
-              </>
-            )}
-            <span>{status}</span>
-            {status !== 'stopped' && (
-              <button type="button" onClick={() => handleStopNode(id)}>
-                stop
-              </button>
-            )}
-          </div>
-        ))
+        nodes.map(
+          ({
+            id,
+            status,
+            url,
+            auth,
+          }: {
+            id: string;
+            status: 'pending' | 'running' | 'stopped';
+            url: string;
+            auth: { user: string; password: string };
+          }) => (
+            <div key={id}>
+              <span>{id}</span>
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                {url}
+              </a>
+              {auth && (
+                <>
+                  <span>{auth.user}</span>
+                  <span>{auth.password}</span>
+                </>
+              )}
+              <span>{status}</span>
+              {status !== 'stopped' && (
+                <button type="button" onClick={() => handleStopNode(id)}>
+                  stop
+                </button>
+              )}
+            </div>
+          ),
+        )
       ) : (
         <div>Oops. It looks like you don't have any nodes running currently</div>
       )}
