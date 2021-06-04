@@ -1,14 +1,23 @@
-import { Layout } from 'components';
+import { Col, Row } from 'react-grid-system';
+import { Button, Layout } from 'components';
+import landingImg from 'assets/images/landing.svg';
+import { StyledHeading, StyledImg, StyledParagraph } from './styles';
 
 const ProductPage = () => (
   <Layout>
-    <h1>Catchy and cool phrase</h1>
-    <p>
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-      magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-      consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-      Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-    </p>
+    <Row>
+      <Col xs={6}>
+        <StyledHeading>Catchy and cool phrase</StyledHeading>
+        <StyledParagraph>
+          The Golem Network fosters a global group of creators building ambitious software solutions that will shape the
+          technological landscape of future generations by accessing computing resources across the platform.
+        </StyledParagraph>
+        <Button label="Start new node" onClick={() => {}} />
+      </Col>
+      <Col xs={6}>
+        <StyledImg src={landingImg} alt="image" />
+      </Col>
+    </Row>
   </Layout>
 );
 
