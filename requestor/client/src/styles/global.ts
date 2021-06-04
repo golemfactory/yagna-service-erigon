@@ -29,8 +29,8 @@ const GlobalStyle = createGlobalStyle`
     
     color: ${color.navy};
     font-family: 'Roboto Mono Medium', monospace;
-    font-size: 0.8rem;
-    line-height: 1.1rem;
+    font-size: 1.2rem;
+    line-height: 1.6rem;
   }
 
   .Toastify {

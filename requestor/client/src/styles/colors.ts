@@ -7,6 +7,7 @@ enum color {
   petrol = '#181EA9',
   blue = '#0070DF',
   red = '#D71B11',
+  yellow = '#FFB627',
   green = '#37C481',
 }
 

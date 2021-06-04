@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWeb3React } from '@web3-react/core';
-import { Layout } from 'components';
+import { Button, Layout, notify, Toast } from 'components';
+import { Node, NodeProps } from './components';
 import httpRequest from 'utils/httpRequest';
+import { StyledButton, StyledParagraph, StyledPlaceholder } from './styles';
 
 const DashboardPage = () => {
-  const [nodes, setNodes] = useState([]);
-  const [error, setError] = useState<string | undefined>(undefined);
+  const [nodes, setNodes] = useState<NodeProps[]>([]);
 
   const { account } = useWeb3React();
 
@@ -13,16 +14,13 @@ const DashboardPage = () => {
 
   const handleError = () => {
     setNodes([]);
-    setError('Something went wrong!');
+    notify(<Toast />, 'error');
   };
 
   const handleFetchNodes = useCallback(
     async () =>
       await httpRequest({ path: 'getInstances', data })
-        .then((instances) => {
-          setNodes(instances);
-          setError(undefined);
-        })
+        .then((instances: NodeProps[]) => setNodes(instances))
         .catch(handleError),
     [data],
   );
@@ -51,46 +49,21 @@ const DashboardPage = () => {
 
   return (
     <Layout>
-      <button type="button" onClick={handleStartNode}>
-        Start your node
-      </button>
       {!!nodes.length ? (
-        nodes.map(
-          ({
-            id,
-            status,
-            url,
-            auth,
-          }: {
-            id: string;
-            status: 'pending' | 'running' | 'stopped';
-            url: string;
-            auth: { user: string; password: string };
-          }) => (
-            <div key={id}>
-              <span>{id}</span>
-              <a href={url} target="_blank" rel="noopener noreferrer">
-                {url}
-              </a>
-              {auth && (
-                <>
-                  <span>{auth.user}</span>
-                  <span>{auth.password}</span>
-                </>
-              )}
-              <span>{status}</span>
-              {status !== 'stopped' && (
-                <button type="button" onClick={() => handleStopNode(id)}>
-                  stop
-                </button>
-              )}
-            </div>
-          ),
-        )
+        <>
+          <StyledButton label="Run new node" onClick={handleStartNode} outlined />
+          {nodes.map((node: NodeProps) => (
+            <Node key={node.id} node={node}>
+              <Button label="Stop node" onClick={() => handleStopNode(node.id)} />
+            </Node>
+          ))}
+        </>
       ) : (
-        <div>Oops. It looks like you don't have any nodes running currently</div>
+        <StyledPlaceholder>
+          <StyledParagraph>Ooops! It looks like you don't have any node currently running </StyledParagraph>
+          <Button label="Start new node" onClick={handleStartNode} />
+        </StyledPlaceholder>
       )}
-      {error}
     </Layout>
   );
 };
