@@ -1,5 +1,7 @@
 import { createGlobalStyle } from 'styled-components';
 import styledNormalize from 'styled-normalize';
+import 'react-toastify/dist/ReactToastify.css';
+import color from './colors';
 
 const GlobalStyle = createGlobalStyle`
   ${styledNormalize};
@@ -10,33 +12,58 @@ const GlobalStyle = createGlobalStyle`
     outline: none;
   }
 
+  ::selection {
+    color: ${color.white};
+    
+    background-color: ${color.navy};
+  }
+
   html {
     font-size: 10px;
   }
-  
+
   body {
-    background-color: #dfdfdf;
-    padding: 2rem;
+    min-height: 100vh;
     
-    p {
-      font-size: 1.6rem;
+    position: relative;
+    
+    color: ${color.navy};
+    font-family: 'Roboto Mono Medium', monospace;
+    font-size: 0.8rem;
+    line-height: 1.1rem;
+  }
+
+  .Toastify {
+    .Toastify__toast-container--top-right {
+      top: 15rem;
     }
-    
-    button {
-      font-size: 1.6rem;
-      
-      margin: 2rem;
+
+    .Toastify__toast {
+      font-family: 'Inter Medium', sans-serif ;
+      color: ${color.navy};
+
+      background-color: ${color.white};
+      border: 0.1rem solid;
     }
-    
-    div {
-      > span {
-        font-size: 1.4rem;
-        margin-right: 1rem;
+
+    .Toastify__toast--error {
+      border-color: ${color.red};
+
+      svg {
+        fill: ${color.red};
       }
+    }
+
+    .Toastify__toast--success {
+      border-color: ${color.green};
       
-      a {
-       margin-right: 1rem;
-     }
+      svg {
+        fill: ${color.green};
+      }
+    }
+    
+    .Toastify__toast-body {
+      width: 100%;
     }
   }
 `;

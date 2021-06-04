@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useWeb3React } from '@web3-react/core';
+import { Layout } from 'components';
 import httpRequest from 'utils/httpRequest';
 
 const DashboardPage = () => {
@@ -49,7 +50,7 @@ const DashboardPage = () => {
       .catch(handleError);
 
   return (
-    <div>
+    <Layout>
       <button type="button" onClick={handleStartNode}>
         Start your node
       </button>
@@ -90,7 +91,7 @@ const DashboardPage = () => {
         <div>Oops. It looks like you don't have any nodes running currently</div>
       )}
       {error}
-    </div>
+    </Layout>
   );
 };
 
