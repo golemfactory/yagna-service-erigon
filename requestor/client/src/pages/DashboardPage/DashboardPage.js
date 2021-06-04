@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useWeb3React } from '@web3-react/core';
 import httpRequest from '../../utils/httpRequest';
 
 const DashboardPage = () => {
   const [nodes, setNodes] = useState([]);
   const [error, setError] = useState(undefined);
 
-  const data = useMemo(() => ({ user_id: '0x3a06B9E5e2fC83bC89DEe56b058bE5c6bfad110B' }), []);
+  const { account } = useWeb3React();
+
+  const data = useMemo(() => ({ user_id: account }), [account]);
 
   const handleError = () => {
     setNodes([]);
