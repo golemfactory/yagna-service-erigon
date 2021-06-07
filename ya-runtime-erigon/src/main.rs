@@ -38,10 +38,10 @@ pub struct ErigonConf {
 impl Default for ErigonConf {
     fn default() -> Self {
         ErigonConf {
-            public_addr: String::from("http://erigon.localhost:8545"),
-            data_dir: String::from("/data/turbo-geth"),
-            passwd_tool_path: String::from("htpasswd"),
-            passwd_file_path: String::from("/etc/nginx/erigon_htpasswd"),
+            public_addr: "http://erigon.localhost:8545".to_string(),
+            data_dir: "/data/turbo-geth".to_string(),
+            passwd_tool_path: "htpasswd".to_string(),
+            passwd_file_path: "/etc/nginx/erigon_htpasswd".to_string(),
             password_default_length: 15,
             erigon_http_addr: "127.0.0.1".to_string(),
             erigon_http_port: "8545".to_string(),
@@ -86,7 +86,7 @@ impl Runtime for ErigonRuntime {
     fn start<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
         //TODO: Receive chain_id from start parameters when Yapapi ready
         // see: https://github.com/golemfactory/yapapi/issues/390
-        let chain_id = String::from("goerli");
+        let chain_id = "goerli".to_string();
         let current_exe_path = std::env::current_exe().unwrap();
         let path = current_exe_path.parent().unwrap();
 
