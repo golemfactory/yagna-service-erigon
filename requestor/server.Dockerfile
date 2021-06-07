@@ -27,7 +27,6 @@ RUN chmod +x yagna_init.sh
 COPY server.py       .
 COPY service_manager service_manager
 COPY erigon_services erigon_services
-COPY static          static
 
 ENV PYTHONUNBUFFERED=1
 
