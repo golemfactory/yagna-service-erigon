@@ -84,9 +84,13 @@ impl Runtime for ErigonRuntime {
     }
 
     fn start<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
-        //TODO: Receive chain_id from start parameters when Yapapi ready
-        // see: https://github.com/golemfactory/yapapi/issues/390
-        let chain_id = "goerli".to_string();
+        let default_chain_id = "goerli".to_string();
+        let chain_id = if let ya_runtime_sdk::cli::Command::Start { args } = &ctx.cli.command {
+            args.into_iter().next().unwrap_or(&default_chain_id)
+        } else {
+            &default_chain_id
+        };
+
         let current_exe_path = std::env::current_exe().unwrap();
         let path = current_exe_path.parent().unwrap();
 
@@ -107,7 +111,7 @@ impl Runtime for ErigonRuntime {
         self.erigon_password = Some(password);
 
         // Spawn erigon processes
-        let data_dir_path = prepare_data_dir_path(&ctx.conf.data_dir.clone(), &chain_id);
+        let data_dir_path = prepare_data_dir_path(&ctx.conf.data_dir.clone(), &"goerli".to_string());
         let mut erigon_pid = spawn_process(
             &mut Command::new(&path.join(ERIGON_BIN))
                 .arg("--chain")
@@ -136,7 +140,15 @@ impl Runtime for ErigonRuntime {
         self.erigon_pid = Some(erigon_pid);
         self.rpcdaemon_pid = Some(rpcd_pid);
 
-        async move { Ok("start".into()) }.boxed_local()
+        let chain_id_copied = chain_id.clone();
+        async move {
+            Ok(serialize::json::json!(
+                {
+                    "network": chain_id_copied
+                }
+            ))
+        }
+        .boxed_local()
     }
 
     fn stop<'a>(&mut self, _: &mut Context<Self>) -> EmptyResponse<'a> {
