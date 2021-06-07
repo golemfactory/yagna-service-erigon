@@ -50,4 +50,4 @@ class YapapiConnector():
         cluster = await golem.run_service(service_wrapper.service_cls)
         while not cluster.instances:
             await asyncio.sleep(0.1)
-        service_wrapper.set_service(cluster.instances[0])
+        service_wrapper.service = cluster.instances[0]

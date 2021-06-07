@@ -11,10 +11,17 @@ class ServiceWrapper():
         self.service_cls = service_cls
         self.id = self._create_id()
         self.stopped = False
-        self.service = None
+        self._service = None
 
-    def set_service(self, service: 'Service'):
-        self.service = service
+    @property
+    def service(self):
+        return self._service
+
+    @service.setter
+    def service(self, service):
+        if not isinstance(service, self.service_cls):
+            raise ValueError(f"This wrapper expects service to be a {self.service_cls.__name__}")
+        self._service = service
 
     @property
     def started(self):
