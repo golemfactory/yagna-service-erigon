@@ -1,5 +1,5 @@
 from yapapi.payload import vm
-from yapapi.executor.services import Service
+from yapapi.services import Service
 import asyncio
 
 URL = 'www.some.where/erigon:7987'
@@ -10,7 +10,8 @@ AUTH = {
 
 
 class PseudoErigon(Service):
-    def post_init(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.url = None
         self.auth = None
 

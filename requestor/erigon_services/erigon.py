@@ -3,7 +3,7 @@ import asyncio
 
 from .erigon_payload import ErigonPayload
 
-from yapapi.executor.services import Service
+from yapapi.services import Service
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -12,7 +12,8 @@ if TYPE_CHECKING:
 
 
 class Erigon(Service):
-    def post_init(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.url = None
         self.auth = None
 
