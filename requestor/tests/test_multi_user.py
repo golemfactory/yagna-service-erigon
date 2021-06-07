@@ -42,6 +42,13 @@ async def check_data(client, not_started_ids, user_id):
         print(f"NOT STARTED YET FOR USER {user_id}")
 
 
+async def get_any_erigon(client, user_id):
+    req = create_request('POST', 'getInstances', user_id)
+    res = await client.send(req)
+    assert res.status_code == 200
+    return res.json()[-1]
+
+
 @pytest.mark.asyncio
 @pytest.mark.skipif(not BASE_URL, reason="BASE_URL is required")
 @pytest.mark.skipif(PROVIDER_CNT < 3, reason="Not enough providers")
@@ -78,8 +85,16 @@ async def test_api():
     async with httpx.AsyncClient() as client:
         requests = []
         for user_id in user_ids:
-            req = create_request('POST', 'stopInstance', user_id)
+            erigon = await get_any_erigon(client, user_id)
+            erigon_id = erigon['id']
+            req = create_request('POST', f'stopInstance/{erigon_id}', user_id)
 
             requests.append(client.send(req))
 
         await asyncio.gather(*requests)
+
+    #   4.  Check if everything is stopped
+    async with httpx.AsyncClient() as client:
+        for user_id in user_ids:
+            erigon = await get_any_erigon(client, user_id)
+            assert erigon['status'] == 'stopped'
