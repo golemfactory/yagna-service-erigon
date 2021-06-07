@@ -10,13 +10,22 @@ if BASE_URL and '://' not in BASE_URL:
 PROVIDER_CNT = int(os.environ.get('PROVIDER_CNT', '1'))
 
 
-def create_request(method, endpoint, user_id):
+def create_request(method, endpoint, user_id, data={}):
     url = os.path.join(BASE_URL, endpoint)
-    user_id_data = {'user_id': user_id}
+    data['user_id'] = user_id
 
-    req = httpx.Request(method, url, json=user_id_data)
+    req = httpx.Request(method, url, json=data)
 
     return req
+
+
+def instance_data(user_id):
+    return {
+        'params': {
+            'network': 'goerli',
+        },
+        'name': f'erigon_created_by_{user_id}',
+    }
 
 
 async def check_data(client, not_started_ids, user_id):
@@ -43,7 +52,7 @@ async def test_api():
     async with httpx.AsyncClient() as client:
         requests = []
         for user_id in user_ids:
-            req = create_request('POST', 'createInstance', user_id)
+            req = create_request('POST', 'createInstance', user_id, instance_data(user_id))
 
             requests.append(client.send(req))
 

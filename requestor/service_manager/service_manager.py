@@ -26,7 +26,8 @@ class ServiceManager():
 
         enable_default_logger(log_file='log.log')
 
-    def create_service(self, service_cls: 'Type[Service]'):
+    def create_service(self, service_cls: 'Type[Service]', start_params: dict = {}):
+        #   TODO: stop ignoring start_params
         service_wrapper = ServiceWrapper(service_cls)
         self.yapapi_connector.create_instance(service_wrapper)
         self.service_wrappers.append(service_wrapper)

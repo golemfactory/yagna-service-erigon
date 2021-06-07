@@ -8,12 +8,15 @@ if BASE_URL and '://' not in BASE_URL:
     BASE_URL = 'http://' + BASE_URL
 
 USER_ID = 123
+INIT_PARAMS = {'network': 'goerli'}
+ERIGON_NAME = 'test_erigon'
 
 
 def run_request(method, endpoint):
-    user_id_data = {'user_id': USER_ID}
+    data = {'user_id': USER_ID, 'params': INIT_PARAMS, 'name': ERIGON_NAME}
     url = os.path.join(BASE_URL, endpoint)
-    res = requests.request(method, url, json=user_id_data)
+    res = requests.request(method, url, json=data)
+    print(res.content)
     return res.status_code, res.json()
 
 
@@ -22,7 +25,7 @@ def test_api():
     status, data = run_request('POST', 'createInstance')
     assert status == 201
     erigon_id = data['id']
-    assert data == {'status': 'pending', 'id': erigon_id}
+    assert data == {'status': 'pending', 'id': erigon_id, 'init_params': INIT_PARAMS, 'name': ERIGON_NAME}
 
     sleep(25)
 
@@ -44,4 +47,4 @@ def test_api():
 
     status, data = run_request('POST', 'getInstances')
     assert status == 200
-    assert {'id': erigon_id, 'status': 'stopped'} in data
+    assert {'id': erigon_id, 'status': 'stopped', 'init_params': INIT_PARAMS, 'name': ERIGON_NAME} in data
