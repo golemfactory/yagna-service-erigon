@@ -3,6 +3,7 @@ use futures::FutureExt;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::atomic::AtomicU64;
@@ -56,6 +57,7 @@ pub struct ErigonRuntime {
     erigon_pid: Option<Child>,
     rpcdaemon_pid: Option<Child>,
     erigon_password: Option<String>,
+    erigon_chain_id: Option<String>,
 }
 
 impl Runtime for ErigonRuntime {
@@ -86,9 +88,9 @@ impl Runtime for ErigonRuntime {
     fn start<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
         let default_chain_id = "goerli".to_string();
         let chain_id = if let ya_runtime_sdk::cli::Command::Start { args } = &ctx.cli.command {
-            args.into_iter().next().unwrap_or(&default_chain_id)
+            parse_json(args.into_iter().next(), &default_chain_id)
         } else {
-            &default_chain_id
+            default_chain_id
         };
 
         let current_exe_path = std::env::current_exe().unwrap();
@@ -111,11 +113,12 @@ impl Runtime for ErigonRuntime {
         self.erigon_password = Some(password);
 
         // Spawn erigon processes
-        let data_dir_path = prepare_data_dir_path(&ctx.conf.data_dir.clone(), &"goerli".to_string());
+        let data_dir_path =
+            prepare_data_dir_path(&ctx.conf.data_dir.clone(), &"goerli".to_string());
         let mut erigon_pid = spawn_process(
             &mut Command::new(&path.join(ERIGON_BIN))
                 .arg("--chain")
-                .arg(chain_id),
+                .arg(chain_id.clone()),
             &data_dir_path,
             &[""; 0],
         )
@@ -139,16 +142,10 @@ impl Runtime for ErigonRuntime {
 
         self.erigon_pid = Some(erigon_pid);
         self.rpcdaemon_pid = Some(rpcd_pid);
+        self.erigon_chain_id = Some(chain_id.clone());
 
         let chain_id_copied = chain_id.clone();
-        async move {
-            Ok(serialize::json::json!(
-                {
-                    "network": chain_id_copied
-                }
-            ))
-        }
-        .boxed_local()
+        async move { Ok(serialize::json::json!({ "network": chain_id_copied })) }.boxed_local()
     }
 
     fn stop<'a>(&mut self, _: &mut Context<Self>) -> EmptyResponse<'a> {
@@ -183,6 +180,7 @@ impl Runtime for ErigonRuntime {
         let (tx, rx) = oneshot::channel();
         let public_addr = ctx.conf.public_addr.clone();
         let password = self.erigon_password.clone();
+        let chain_id = self.erigon_chain_id.clone();
 
         tokio::task::spawn_local(async move {
             // command execution started
@@ -194,6 +192,7 @@ impl Runtime for ErigonRuntime {
                 {
                     "status": "running",
                     "url": public_addr,
+                    "network": chain_id,
                     "auth": {
                         "user": AUTH_ERIGON_USER,
                         "password": password
@@ -263,4 +262,24 @@ fn generate_password_file(
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
+}
+
+fn parse_json(config: Option<&String>, default_chain_id: &String) -> String {
+    match config {
+        None => default_chain_id.clone(),
+        Some(json) => {
+            let value: Value =
+                serde_json::from_str(json).expect("Cannot parse config, assumes json string");
+            let network = value["network"].as_str().unwrap();
+            let _ = chain_id_valid(network).unwrap();
+            network.to_owned()
+        }
+    }
+}
+
+fn chain_id_valid(chain_id: &str) -> Result<(), String> {
+    match &chain_id.to_lowercase()[..] {
+        "goerli" | "rinkeby" | "ropsten" | "kovan" => Ok(()),
+        _ => Err("Unsupported chain id".to_owned()),
+    }
 }
