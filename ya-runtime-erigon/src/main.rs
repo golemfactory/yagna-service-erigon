@@ -15,13 +15,9 @@ const ERIGON_BIN: &str = "tg";
 const RPCDAEMON_BIN: &str = "rpcdaemon";
 
 //TODO: Make parameter list configurable for further extendability (Erigon & Rpcdaemon)
-const RPCDAEMON_PARAMS: &[&str; 10] = &[
+const RPCDAEMON_PARAMS: &[&str; 6] = &[
     "--private.api.addr",
     "localhost:9090",
-    "--http.addr",
-    "127.0.0.1",
-    "--http.port",
-    "8545",
     "--http.vhosts",
     "*",
     "--http.api",
@@ -35,6 +31,8 @@ pub struct ErigonConf {
     passwd_tool_path: String,
     passwd_file_path: String,
     password_default_length: usize,
+    erigon_http_addr: String,
+    erigon_http_port: String,
 }
 
 impl Default for ErigonConf {
@@ -45,6 +43,8 @@ impl Default for ErigonConf {
             passwd_tool_path: String::from("htpasswd"),
             passwd_file_path: String::from("/etc/nginx/erigon_htpasswd"),
             password_default_length: 15,
+            erigon_http_addr: "127.0.0.1".to_string(),
+            erigon_http_port: "8545".to_string(),
         }
     }
 }
@@ -117,8 +117,14 @@ impl Runtime for ErigonRuntime {
         )
         .expect("Erigon: Failed to spawn");
 
+        let http_addr = ctx.conf.erigon_http_addr.clone();
+        let http_port = ctx.conf.erigon_http_port.clone();
         let rpcd_pid = spawn_process(
-            &mut Command::new(&path.join(RPCDAEMON_BIN)),
+            &mut Command::new(&path.join(RPCDAEMON_BIN))
+                .arg("--http.addr")
+                .arg(http_addr)
+                .arg("--http.port")
+                .arg(http_port),
             &data_dir_path,
             RPCDAEMON_PARAMS,
         );
