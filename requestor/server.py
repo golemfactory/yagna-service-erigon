@@ -1,4 +1,4 @@
-from quart import Quart, request, send_from_directory
+from quart import Quart, request
 from quart_cors import cors
 from service_manager import ServiceManager
 import erigon_services
@@ -99,11 +99,6 @@ async def stop_instance(erigon_id):
 
     await erigon.stop()
     return erigon_data(erigon), 200
-
-
-@app.route('/static/<path:filename>', methods=['GET'])
-async def static_file(filename):
-    return send_from_directory('static', filename)
 
 
 @app.errorhandler(UserDataMissing)

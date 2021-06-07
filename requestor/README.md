@@ -38,6 +38,3 @@ All requests except static file request must contain a JSON body with 'user\_id'
     POST /createInstance    - create new instance (this *should* use some config data from body, but 
                               currently everything except 'user_id' is ignored)
     POST /stopInstance/<id> - stop instance with id <id>
-    GET  /static/<path>     - return a file from 'static' directory, on a given path
-                              (NOTE: this probably should be done somewhere else (nginx?) in the final version)
-                              e.g GET /static/index.html 
