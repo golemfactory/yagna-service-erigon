@@ -1,7 +1,7 @@
 import request from 'superagent';
 import { HttpRequest, Url } from './types';
 
-const url = ({ path, id }: Url) => `http://localhost:5000/${path}${id ? `/${id}` : ''}`;
+const url = ({ path, id }: Url) => `https://erigon.golem.network/${path}${id ? `/${id}` : ''}`;
 
 const httpRequest = ({ method = 'post', path, id = '', data }: HttpRequest) =>
   request(method.toUpperCase(), url({ path, id }))
