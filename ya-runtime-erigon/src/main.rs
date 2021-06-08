@@ -4,6 +4,7 @@ use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::fs;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::atomic::AtomicU64;
@@ -14,6 +15,8 @@ use ya_runtime_sdk::*;
 const AUTH_ERIGON_USER: &str = "erigolem";
 const ERIGON_BIN: &str = "tg";
 const RPCDAEMON_BIN: &str = "rpcdaemon";
+
+const SUPPORTED_CHAINS: &[&str; 4] = &["goerli", "rinkeby", "ropsten", "kovan"];
 
 //TODO: Make parameter list configurable for further extendability (Erigon & Rpcdaemon)
 const RPCDAEMON_PARAMS: &[&str; 6] = &[
@@ -64,6 +67,12 @@ impl Runtime for ErigonRuntime {
     const MODE: RuntimeMode = RuntimeMode::Server;
 
     fn deploy<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
+        let data_dir = ctx.conf.data_dir.clone();
+        let chain_subdirs: Vec<PathBuf> = SUPPORTED_CHAINS
+            .into_iter()
+            .map(|d| prepare_data_dir_path(&data_dir, &d.to_string()))
+            .collect();
+
         let data_dir_path = PathBuf::from(ctx.conf.data_dir.clone());
         let parent_data_dir = data_dir_path.as_path();
         if !(parent_data_dir.exists() && parent_data_dir.is_dir()) {
@@ -71,6 +80,14 @@ impl Runtime for ErigonRuntime {
                 "Configuration 'data_dir' directory has to exists and needs to contain
                  the directory for every supported network, named of the network"
             );
+        }
+
+        // create all supported chains data subdirs
+        for pathbuf in chain_subdirs {
+            if !&pathbuf.is_dir() {
+                fs::create_dir(pathbuf.clone())
+                    .unwrap_or_else(|_| panic!("Unable to create subdir {:?}", &pathbuf));
+            }
         }
 
         async move {
@@ -113,8 +130,7 @@ impl Runtime for ErigonRuntime {
         self.erigon_password = Some(password);
 
         // Spawn erigon processes
-        let data_dir_path =
-            prepare_data_dir_path(&ctx.conf.data_dir.clone(), &"goerli".to_string());
+        let data_dir_path = prepare_data_dir_path(&ctx.conf.data_dir.clone(), &chain_id);
         let mut erigon_pid = spawn_process(
             &mut Command::new(&path.join(ERIGON_BIN))
                 .arg("--chain")
