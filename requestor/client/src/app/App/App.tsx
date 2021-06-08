@@ -4,7 +4,7 @@ import { InjectedConnector } from '@web3-react/injected-connector';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { isNull } from 'lodash';
 import { ToastContainer } from 'react-toastify';
-import { Footer, Header } from 'components';
+import { Footer, Header, notify, Toast } from 'components';
 import { DashboardPage, ProductPage } from 'pages';
 import GlobalStyle from 'styles/global';
 import 'fonts/font-face.css';
@@ -34,12 +34,14 @@ const App = () => {
     setMetamask(library && library.givenProvider.isMetaMask);
   }, [library]);
 
+  const handleNotify = () => notify(<Toast code={-32002} />);
+
   return (
     <>
       <GlobalStyle />
-      <Header metamask={metamask} />
+      <Header metamask={metamask} active={active} onNotify={handleNotify} />
       <ToastContainer hideProgressBar />
-      {active ? <DashboardPage /> : <ProductPage />}
+      {active ? <DashboardPage /> : <ProductPage onNotify={handleNotify} />}
       <Footer />
     </>
   );
