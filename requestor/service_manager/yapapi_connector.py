@@ -1,4 +1,4 @@
-from yapapi.executor import Golem
+from yapapi import Golem
 import asyncio
 
 from typing import TYPE_CHECKING
