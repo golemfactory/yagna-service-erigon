@@ -9,6 +9,7 @@ use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering::Relaxed;
+use titlecase::titlecase;
 use tokio::process::{Child, Command};
 use ya_runtime_sdk::*;
 
@@ -81,7 +82,7 @@ impl Runtime for ErigonRuntime {
     fn deploy<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
         let data_dir = ctx.conf.data_dir.clone();
         let chain_subdirs: Vec<PathBuf> = Network::iter_variant_names()
-            .map(|d| prepare_data_dir_path(&data_dir, &d.to_string()))
+            .map(|d| prepare_data_dir_path(&data_dir, &d.to_lowercase()))
             .collect();
 
         let data_dir_path = PathBuf::from(ctx.conf.data_dir.clone());
@@ -120,6 +121,7 @@ impl Runtime for ErigonRuntime {
             DEFAULT_CHAIN
         };
         let chain = chain.to_string().to_lowercase();
+        self.erigon_chain = Some(chain.clone());
 
         let current_exe_path = std::env::current_exe().unwrap();
         let path = current_exe_path.parent().unwrap();
@@ -297,21 +299,7 @@ fn get_chain_from_config(config: Option<&String>) -> Network {
                 serde_json::from_str(json).expect("Cannot parse config, assumes json string");
             let network = value["network"].as_str().unwrap();
 
-            //make_ascii_titlecase(&mut network);
-            str::parse::<Network>(network).expect("Unsupported chain")
+            titlecase(network).parse().expect("Unsupported chain")
         }
     }
 }
-//
-// fn make_ascii_titlecase(s: &mut str) {
-//     if let Some(r) = s.get_mut(0..1) {
-//         r.make_ascii_uppercase();
-//     }
-// }
-
-// fn chain_id_valid(chain_id: &str) -> Result<(), String> {
-//     match &chain_id.to_lowercase()[..] {
-//         "Goerli" | "Rinkeby" | "Ropsten" | "Kovan" => Ok(()),
-//         _ => Err(" id".to_owned()),
-//     }
-// }
