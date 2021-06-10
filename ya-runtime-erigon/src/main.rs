@@ -205,7 +205,7 @@ impl Runtime for ErigonRuntime {
         let (tx, rx) = oneshot::channel();
         let public_addr = ctx.conf.public_addr.clone();
         let password = self.erigon_password.clone();
-        let chain_id = self.erigon_chain.clone();
+        let chain = self.erigon_chain.clone();
 
         tokio::task::spawn_local(async move {
             // command execution started
@@ -217,7 +217,7 @@ impl Runtime for ErigonRuntime {
                 {
                     "status": "running",
                     "url": public_addr,
-                    "network": chain_id,
+                    "network": chain,
                     "auth": {
                         "user": AUTH_ERIGON_USER,
                         "password": password
@@ -270,8 +270,8 @@ fn spawn_process(cmd: &mut Command, datadir: &PathBuf, params: &[&str]) -> std::
         .spawn()
 }
 
-fn prepare_data_dir_path(parent_dir: &String, chain_id: &String) -> PathBuf {
-    PathBuf::from(parent_dir).join(chain_id)
+fn prepare_data_dir_path(parent_dir: &String, chain: &String) -> PathBuf {
+    PathBuf::from(parent_dir).join(chain)
 }
 
 fn generate_password_file(
