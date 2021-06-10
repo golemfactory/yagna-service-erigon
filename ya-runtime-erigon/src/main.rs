@@ -43,7 +43,7 @@ impl Default for ErigonConf {
     fn default() -> Self {
         ErigonConf {
             public_addr: "http://erigon.localhost:8545".to_string(),
-            data_dir: "/data/turbo-geth".to_string(),
+            data_dir: "/data/erigon".to_string(),
             passwd_tool_path: "htpasswd".to_string(),
             passwd_file_path: "/etc/nginx/erigon_htpasswd".to_string(),
             password_default_length: 15,
