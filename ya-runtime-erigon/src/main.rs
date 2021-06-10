@@ -15,8 +15,7 @@ use ya_runtime_sdk::*;
 const AUTH_ERIGON_USER: &str = "erigolem";
 const ERIGON_BIN: &str = "tg";
 const RPCDAEMON_BIN: &str = "rpcdaemon";
-const DEFAULT_CHAIN: &str = "goerli";
-const SUPPORTED_CHAINS: &[&str; 4] = &["goerli", "rinkeby", "ropsten", "kovan"];
+const DEFAULT_CHAIN: Network = Network::Goerli;
 
 //TODO: Make parameter list configurable for further extendability (Erigon & Rpcdaemon)
 const RPCDAEMON_PARAMS: &[&str; 6] = &[
@@ -27,6 +26,19 @@ const RPCDAEMON_PARAMS: &[&str; 6] = &[
     "--http.api",
     "eth,debug,net,trace,web3,tg",
 ];
+
+#[macro_use]
+extern crate custom_derive;
+#[macro_use]
+extern crate enum_derive;
+custom_derive! {
+#[derive(Debug, PartialEq, EnumDisplay, EnumFromStr, IterVariantNames(NetworkVariantNames))]
+pub enum Network {
+    Goerli,
+    Rinkeby,
+    Ropsten,
+    Kovan
+}}
 
 #[derive(Deserialize, Serialize)]
 pub struct ErigonConf {
@@ -68,8 +80,7 @@ impl Runtime for ErigonRuntime {
 
     fn deploy<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
         let data_dir = ctx.conf.data_dir.clone();
-        let chain_subdirs: Vec<PathBuf> = SUPPORTED_CHAINS
-            .into_iter()
+        let chain_subdirs: Vec<PathBuf> = Network::iter_variant_names()
             .map(|d| prepare_data_dir_path(&data_dir, &d.to_string()))
             .collect();
 
@@ -104,10 +115,11 @@ impl Runtime for ErigonRuntime {
 
     fn start<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
         let chain = if let ya_runtime_sdk::cli::Command::Start { args } = &ctx.cli.command {
-            parse_json(args.into_iter().next())
+            get_chain_from_config(args.into_iter().next())
         } else {
-            DEFAULT_CHAIN.to_string()
+            DEFAULT_CHAIN
         };
+        let chain = chain.to_string().to_lowercase();
 
         let current_exe_path = std::env::current_exe().unwrap();
         let path = current_exe_path.parent().unwrap();
@@ -277,22 +289,29 @@ fn generate_password_file(
         .spawn()
 }
 
-fn parse_json(config: Option<&String>) -> String {
+fn get_chain_from_config(config: Option<&String>) -> Network {
     match config {
-        None => DEFAULT_CHAIN.to_string(),
+        None => DEFAULT_CHAIN,
         Some(json) => {
             let value: Value =
                 serde_json::from_str(json).expect("Cannot parse config, assumes json string");
             let network = value["network"].as_str().unwrap();
-            let _ = chain_id_valid(network).unwrap();
-            network.to_owned()
+
+            //make_ascii_titlecase(&mut network);
+            str::parse::<Network>(network).expect("Unsupported chain")
         }
     }
 }
+//
+// fn make_ascii_titlecase(s: &mut str) {
+//     if let Some(r) = s.get_mut(0..1) {
+//         r.make_ascii_uppercase();
+//     }
+// }
 
-fn chain_id_valid(chain_id: &str) -> Result<(), String> {
-    match &chain_id.to_lowercase()[..] {
-        "goerli" | "rinkeby" | "ropsten" | "kovan" => Ok(()),
-        _ => Err("Unsupported chain id".to_owned()),
-    }
-}
+// fn chain_id_valid(chain_id: &str) -> Result<(), String> {
+//     match &chain_id.to_lowercase()[..] {
+//         "Goerli" | "Rinkeby" | "Ropsten" | "Kovan" => Ok(()),
+//         _ => Err(" id".to_owned()),
+//     }
+// }
