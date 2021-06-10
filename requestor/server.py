@@ -26,10 +26,10 @@ class ErigonData():
     def api_repr(self):
         erigon = self.erigon
 
-        if not erigon.started:
-            status = 'pending'
-        elif erigon.stopped:
+        if erigon.stopped:
             status = 'stopped'
+        elif not erigon.started:
+            status = 'pending'
         else:
             if erigon.service.url is None:
                 status = 'starting'
