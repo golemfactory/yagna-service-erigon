@@ -15,7 +15,7 @@ use ya_runtime_sdk::*;
 const AUTH_ERIGON_USER: &str = "erigolem";
 const ERIGON_BIN: &str = "tg";
 const RPCDAEMON_BIN: &str = "rpcdaemon";
-
+const DEFAULT_CHAIN: &str = "goerli";
 const SUPPORTED_CHAINS: &[&str; 4] = &["goerli", "rinkeby", "ropsten", "kovan"];
 
 //TODO: Make parameter list configurable for further extendability (Erigon & Rpcdaemon)
@@ -60,7 +60,7 @@ pub struct ErigonRuntime {
     erigon_pid: Option<Child>,
     rpcdaemon_pid: Option<Child>,
     erigon_password: Option<String>,
-    erigon_chain_id: Option<String>,
+    erigon_chain: Option<String>,
 }
 
 impl Runtime for ErigonRuntime {
@@ -103,11 +103,10 @@ impl Runtime for ErigonRuntime {
     }
 
     fn start<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
-        let default_chain_id = "goerli".to_string();
-        let chain_id = if let ya_runtime_sdk::cli::Command::Start { args } = &ctx.cli.command {
-            parse_json(args.into_iter().next(), &default_chain_id)
+        let chain = if let ya_runtime_sdk::cli::Command::Start { args } = &ctx.cli.command {
+            parse_json(args.into_iter().next())
         } else {
-            default_chain_id
+            DEFAULT_CHAIN.to_string()
         };
 
         let current_exe_path = std::env::current_exe().unwrap();
@@ -130,11 +129,11 @@ impl Runtime for ErigonRuntime {
         self.erigon_password = Some(password);
 
         // Spawn erigon processes
-        let data_dir_path = prepare_data_dir_path(&ctx.conf.data_dir.clone(), &chain_id);
+        let data_dir_path = prepare_data_dir_path(&ctx.conf.data_dir.clone(), &chain);
         let mut erigon_pid = spawn_process(
             &mut Command::new(&path.join(ERIGON_BIN))
                 .arg("--chain")
-                .arg(chain_id.clone()),
+                .arg(chain.clone()),
             &data_dir_path,
             &[""; 0],
         )
@@ -158,10 +157,8 @@ impl Runtime for ErigonRuntime {
 
         self.erigon_pid = Some(erigon_pid);
         self.rpcdaemon_pid = Some(rpcd_pid);
-        self.erigon_chain_id = Some(chain_id.clone());
 
-        let chain_id_copied = chain_id.clone();
-        async move { Ok(serialize::json::json!({ "network": chain_id_copied })) }.boxed_local()
+        async move { Ok(serialize::json::json!({ "network": chain })) }.boxed_local()
     }
 
     fn stop<'a>(&mut self, _: &mut Context<Self>) -> EmptyResponse<'a> {
@@ -196,7 +193,7 @@ impl Runtime for ErigonRuntime {
         let (tx, rx) = oneshot::channel();
         let public_addr = ctx.conf.public_addr.clone();
         let password = self.erigon_password.clone();
-        let chain_id = self.erigon_chain_id.clone();
+        let chain_id = self.erigon_chain.clone();
 
         tokio::task::spawn_local(async move {
             // command execution started
@@ -280,9 +277,9 @@ fn generate_password_file(
         .spawn()
 }
 
-fn parse_json(config: Option<&String>, default_chain_id: &String) -> String {
+fn parse_json(config: Option<&String>) -> String {
     match config {
-        None => default_chain_id.clone(),
+        None => DEFAULT_CHAIN.to_string(),
         Some(json) => {
             let value: Value =
                 serde_json::from_str(json).expect("Cannot parse config, assumes json string");
