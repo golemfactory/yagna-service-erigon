@@ -5,10 +5,10 @@ import erigon_services
 
 
 def state(service_wrapper):
-    if not service_wrapper.started:
-        status = 'pending'
-    elif service_wrapper.stopped:
+    if service_wrapper.stopped:
         status = 'stopped'
+    elif not service_wrapper.started:
+        status = 'pending'
     else:
         #   NOTE: this is erigon-specific thing, we don't use state of instance
         #   beacues from our POV it is "running" when we know the url
