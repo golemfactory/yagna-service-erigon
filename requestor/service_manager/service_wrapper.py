@@ -3,7 +3,7 @@ import uuid
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Type
-    from yapapi.executor.services import Service
+    from yapapi.services import Service, Cluster
 
 
 class ServiceWrapper():
@@ -11,21 +11,35 @@ class ServiceWrapper():
         self.service_cls = service_cls
         self.id = self._create_id()
         self.stopped = False
-        self._service = None
+        self._cluster = None
+
+    @property
+    def cluster(self):
+        return self._cluster
 
     @property
     def service(self):
-        return self._service
-
-    @service.setter
-    def service(self, service):
-        if not isinstance(service, self.service_cls):
-            raise ValueError(f"This wrapper expects service to be a {self.service_cls.__name__}")
-        self._service = service
+        if self._cluster and self._cluster.instances:
+            return self._cluster.instances[0]
+        return None
 
     @property
     def started(self):
         return self.service is not None
+
+    @cluster.setter
+    def cluster(self, cluster: 'Cluster'):
+        #   TODO: change to a public attribute when it is available in yapapi
+        #         (this is already requested, issue 459)
+        if cluster._service_class != self.service_cls:
+            raise ValueError(f"Expected: {self.service_cls.__name__}, got {cluster._service_class.__name__}")
+
+        if self.stopped:
+            #   This is a very-rare-but-possible situation when we got stopped before the cluster
+            #   was created --> cluster has to be stopped as well
+            cluster.stop()
+
+        self._cluster = cluster
 
     async def stop(self):
         if self.stopped:
@@ -33,9 +47,8 @@ class ServiceWrapper():
         self.stopped = True
         print(f"STOPPING {self}")
 
-        if self.started:
-            #   TODO: stop using a private field
-            self.service._cluster.stop()
+        if self.cluster is not None:
+            self.cluster.stop()
 
     async def run_single_command(self, cmd: str):
         self.service.send_message_nowait(cmd)
