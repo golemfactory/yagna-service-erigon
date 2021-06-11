@@ -17,16 +17,25 @@ class Erigon(Service):
         self.url = None
         self.auth = None
 
+        #   NOTE: this is the network provider says it is running on, not the one
+        #         requested (although those two should match)
+        self.network = None
+
     @classmethod
     async def get_payload(cls):
         return ErigonPayload()
+
+    async def start(self):
+        self._ctx.deploy()
+        self._ctx.start('{"network": "kovan"}')
+        yield self._ctx.commit()
 
     async def run(self):
         #   Set url & auth
         self._ctx.run('STATUS')
         processing_future = yield self._ctx.commit()
         result = self._parse_status_result(processing_future.result())
-        self.url, self.auth = result['url'], result['auth']
+        self.url, self.auth, self.network = result['url'], result['auth'], result['network']
 
         #   Wait forever, because Service is stopped when run ends
         await asyncio.Future()
