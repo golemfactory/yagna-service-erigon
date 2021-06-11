@@ -1,4 +1,3 @@
-import asyncio
 from yapapi.log import enable_default_logger, log_summary, log_event_repr
 from .service_wrapper import ServiceWrapper
 from .yapapi_connector import YapapiConnector
@@ -33,6 +32,6 @@ class ServiceManager():
         return service_wrapper
 
     async def close(self):
-        tasks = [service_wrapper.stop() for service_wrapper in self.service_wrappers]
-        await asyncio.gather(*tasks)
+        for service_wrapper in self.service_wrappers:
+            service_wrapper.stop()
         await self.yapapi_connector.stop()

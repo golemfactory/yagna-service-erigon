@@ -127,7 +127,7 @@ async def stop_instance(erigon_id):
     except KeyError:
         return 'Invalid erigon_id', 404
 
-    await erigon_data.erigon.stop()
+    erigon_data.erigon.stop()
 
     return erigon_data.api_repr(), 200
 

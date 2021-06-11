@@ -42,7 +42,7 @@ class ServiceWrapper():
 
         self._cluster = cluster
 
-    async def stop(self):
+    def stop(self):
         if self.stopped:
             return
         self.stopped = True
