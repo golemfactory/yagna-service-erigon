@@ -176,7 +176,7 @@ http {
         listen                               [::]:8545${ERIGON_USE_SSL:+ ssl http2};
         server_name                          $ERIGON_HOSTNAME;
 
-        ${ERIGON_USE_SSL:# SSL}
+        ${ERIGON_USE_SSL:+# SSL}
         ${ERIGON_USE_SSL:+ssl_certificate                      /etc/letsencrypt/live/$ERIGON_HOSTNAME/fullchain.pem;}
         ${ERIGON_USE_SSL:+ssl_certificate_key                  /etc/letsencrypt/live/$ERIGON_HOSTNAME/privkey.pem;}
         ${ERIGON_USE_SSL:+ssl_trusted_certificate              /etc/letsencrypt/live/$ERIGON_HOSTNAME/chain.pem;}
@@ -193,7 +193,7 @@ http {
 
         # reverse proxy
         location / {
-            proxy_pass                         http://127.0.0.1:8545;
+            proxy_pass                         http://127.0.0.1:8555;
             proxy_http_version                 1.1;
             proxy_cache_bypass                 \$http_upgrade;
 
@@ -237,41 +237,42 @@ cat >"${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-erigon.json" <<EOF
     "name": "erigon",
     "version": "0.1.0",
     "supervisor-path": "exe-unit",
-    "runtime-path": "ya-runtime-erigon/ya-erigon-runtime",
+    "runtime-path": "ya-runtime-erigon/ya-runtime-erigon",
     "description": "Service wrapper for Erigon (formelly Turbo-Geth)",
     "extra-args": ["--runtime-managed-image"]
   }
 ]
 EOF
-curl -sSfL https://github.com/golemfactory/yagna-service-erigon/releases/download/3deaadc/ya-erigon-runtime.tar.gz \
+curl -sSfL https://github.com/golemfactory/yagna-service-erigon/releases/download/8e2015f/ya-runtime-erigon.tar.gz \
     | tar -xzf - -C "${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-erigon" \
     || die "failed to install erigon runtime"
 
 mkdir -p "${ERIGON_DATADIR}/goerli"
-mkdir -p "${ERIGON_USER_HOME}/.local/share/ya-erigon-runtime"
+mkdir -p "${ERIGON_USER_HOME}/.local/share/ya-runtime-erigon"
 
-cat >"${ERIGON_USER_HOME}/.local/share/ya-erigon-runtime/ya-erigon-runtime.json" <<EOF
+cat >"${ERIGON_USER_HOME}/.local/share/ya-runtime-erigon/ya-runtime-erigon.json" <<EOF
 {
   "public_addr": "https://${ERIGON_HOSTNAME}:8545",
   "data_dir": "${ERIGON_DATADIR}",
   "passwd_tool_path": "htpasswd",
   "passwd_file_path": "/etc/nginx/erigon_htpasswd",
-  "password_default_length": 15
+  "password_default_length": 15,
+  "erigon_http_addr": "127.0.0.1",
+  "erigon_http_port": "8555"
 }
 EOF
 
 chown -R "${ERIGON_USER}:${ERIGON_USER}" \
     "${ERIGON_DATADIR}" \
-    "${ERIGON_USER_HOME}/.local/lib/yagna" \
-    "${ERIGON_USER_HOME}/.local/share/ya-erigon-runtime"
+    "${ERIGON_USER_HOME}/.local"
 
 # install yagna
 curl -sSf https://join.golem.network/as-provider \
-    | sudo -i -u "$ERIGON_USER" -- env YA_INSTALLER_CORE=pre-rel-v0.7.0-rc6 bash -
+    | sudo -i -u "$ERIGON_USER" -- env YA_INSTALLER_CORE=pre-rel-v0.7.0-rc8 bash -
 # for some reason even on success installer exits with code 1
 
-sudo -i -u golem ya-provider preset deactivate wasmtime
-sudo -i -u golem ya-provider preset deactivate vm
+sudo -i -u "$ERIGON_USER" ya-provider preset deactivate wasmtime
+sudo -i -u "$ERIGON_USER" ya-provider preset deactivate vm
 
 # install systemd service
 cat >/etc/systemd/system/golem.service <<EOF
