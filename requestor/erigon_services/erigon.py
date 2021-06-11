@@ -27,7 +27,15 @@ class Erigon(Service):
 
     async def start(self):
         self._ctx.deploy()
-        self._ctx.start('{"network": "kovan"}')
+
+        start_args = await self._get_start_args()
+        if start_args:
+            erigon_init_args = start_args[0]
+            erigon_init_args_str = json.dumps(erigon_init_args)
+            self._ctx.start(erigon_init_args_str)
+        else:
+            self._ctx.start()
+
         yield self._ctx.commit()
 
     async def run(self):
@@ -49,3 +57,12 @@ class Erigon(Service):
         mock_echo_data, erigon_data = stdout.split('ERIGON: ', 2)
         erigon_data = json.loads(erigon_data)
         return erigon_data
+
+    async def _get_start_args(self):
+        #   TODO: this is part of the ugly start-passing-protocol & will change
+        #         when yapapi issue 372 is fixed
+        while True:
+            try:
+                return self._cluster.instance_start_args
+            except AttributeError:
+                await asyncio.sleep(0.1)

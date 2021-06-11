@@ -49,3 +49,6 @@ class YapapiConnector():
     async def _run_service(self, golem: Golem, service_wrapper: 'ServiceWrapper'):
         cluster = await golem.run_service(service_wrapper.service_cls)
         service_wrapper.cluster = cluster
+
+        #   TODO: this will change when yapapi issue 372 is fixed
+        cluster.instance_start_args = service_wrapper.start_args

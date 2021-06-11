@@ -44,6 +44,7 @@ class ErigonData():
         if status == 'running':
             data['url'] = erigon.service.url
             data['auth'] = erigon.service.auth
+            data['network'] = erigon.service.network
 
         data['name'] = self.name
         data['init_params'] = self.init_params
@@ -102,7 +103,7 @@ async def create_instance():
         return "'params' should be an object", 400
 
     #   Initialize erigon
-    erigon = app.service_manager.create_service(ERIGON_CLS, init_params)
+    erigon = app.service_manager.create_service(ERIGON_CLS, [init_params])
 
     #   Save the data
     name = request_data.get('name', f'erigon_{erigon.id}')
