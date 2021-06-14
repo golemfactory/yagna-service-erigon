@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#   GENERAL NOTE
+#   Here we start yagna and server app in the same Docker container.
+#   This works & is pretty simple, but the recommended way of running this sort
+#   of a system on Docker is to have different processes running in different containers,
+#   connected e.g. with docker-compose, like here: https://github.com/golemfactory/galatea
+
 #   1.  Start yagna in the background & wait until it starts
 set -m
 
