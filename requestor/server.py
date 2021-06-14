@@ -5,6 +5,7 @@ import erigon_services
 from collections import defaultdict
 import json
 import os
+from datetime import datetime
 
 app = Quart(__name__)
 cors(app)
@@ -20,6 +21,8 @@ class ErigonServiceWrapper(ServiceWrapper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._name = None
+        self._created_at = datetime.utcnow()
+        self._stopped_at = None
 
     @property
     def name(self):
@@ -28,6 +31,11 @@ class ErigonServiceWrapper(ServiceWrapper):
     @name.setter
     def name(self, name):
         self._name = name
+
+    def stop(self):
+        super().stop()
+        if self._stopped_at is None:
+            self._stopped_at = datetime.utcnow()
 
     def api_repr(self):
         if self.stopped:
@@ -45,12 +53,14 @@ class ErigonServiceWrapper(ServiceWrapper):
             'status': status,
             'name': self.name,
             'init_params': self.start_args[0],
+            'created_at': self._created_at.isoformat(),
         }
-
         if status == 'running':
             data['url'] = self.service.url
             data['auth'] = self.service.auth
             data['network'] = self.service.network
+        elif status == 'stopped':
+            data['stopped_at'] = self._stopped_at.isoformat()
 
         return data
 

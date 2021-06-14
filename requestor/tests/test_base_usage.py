@@ -33,7 +33,9 @@ def test_api(network):
     status, data = run_request('POST', 'createInstance', {'params': init_params, 'name': ERIGON_NAME})
     assert status == 201
     erigon_id = data['id']
-    assert data == {'status': 'pending', 'id': erigon_id, 'init_params': init_params, 'name': ERIGON_NAME}
+    assert (data['status'], data['id'], data['init_params'], data['name']) == \
+           ('pending', erigon_id, init_params, ERIGON_NAME)
+    assert 'created_at' in data
 
     #   2.  Wait for the instance to run
     for i in range(10):
@@ -68,4 +70,8 @@ def test_api(network):
 
     status, data = run_request('POST', 'getInstances')
     assert status == 200
-    assert {'id': erigon_id, 'status': 'stopped', 'init_params': init_params, 'name': ERIGON_NAME} in data
+    data = data[-1]
+    assert (data['status'], data['id'], data['init_params'], data['name']) == \
+           ('stopped', erigon_id, init_params, ERIGON_NAME)
+    assert 'created_at' in data
+    assert 'stopped_at' in data
