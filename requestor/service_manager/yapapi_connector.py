@@ -7,8 +7,9 @@ if TYPE_CHECKING:
 
 
 class YapapiConnector():
-    def __init__(self, executor_cfg: dict):
+    def __init__(self, executor_cfg: dict, exception_handler):
         self.executor_cfg = executor_cfg
+        self._exception_handler = exception_handler
 
         self.command_queue = asyncio.Queue()
         self.run_service_tasks = []
@@ -31,6 +32,12 @@ class YapapiConnector():
         await self.executor_task
 
     async def run(self):
+        try:
+            await self._run_golem()
+        except Exception as e:
+            await self._exception_handler(e)
+
+    async def _run_golem(self):
         async with Golem(**self.executor_cfg) as golem:
             print(
                 f"Using subnet: {self.executor_cfg['subnet_tag']}  "
