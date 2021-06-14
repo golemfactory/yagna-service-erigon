@@ -4,11 +4,13 @@ import asyncio
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .service_wrapper import ServiceWrapper
+    from asyncio import Event
 
 
 class YapapiConnector():
-    def __init__(self, executor_cfg: dict):
+    def __init__(self, executor_cfg: dict, exception_event: 'Event'):
         self.executor_cfg = executor_cfg
+        self._exception_event = exception_event
 
         self.command_queue = asyncio.Queue()
         self.run_service_tasks = []
@@ -31,6 +33,13 @@ class YapapiConnector():
         await self.executor_task
 
     async def run(self):
+        try:
+            await self._run_golem()
+        except Exception as e:
+            print("GOLEM FAILED\n", e)
+            self._exception_event.set()
+
+    async def _run_golem(self):
         async with Golem(**self.executor_cfg) as golem:
             print(
                 f"Using subnet: {self.executor_cfg['subnet_tag']}  "
