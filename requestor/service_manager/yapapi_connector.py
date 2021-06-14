@@ -41,8 +41,9 @@ class YapapiConnector():
 
     async def _run_golem(self):
         async with Golem(**self.executor_cfg) as golem:
+            subnet_tag = self.executor_cfg.get('subnet_tag', '')
             print(
-                f"Using subnet: {self.executor_cfg['subnet_tag']}  "
+                f"Using subnet: {subnet_tag}  "
                 f"payment driver: {golem.driver}  "
                 f"network: {golem.network}\n"
             )

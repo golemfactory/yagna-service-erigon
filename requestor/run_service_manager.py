@@ -3,6 +3,11 @@ import asyncio
 from service_manager import ServiceManager
 import erigon_services
 
+EXECUTOR_CFG = {
+    'budget': 1,
+    'subnet_tag': 'erigon',
+}
+
 
 def state(service_wrapper):
     if service_wrapper.stopped:
@@ -38,7 +43,7 @@ async def main(service_manager):
         await asyncio.sleep(1)
 
 if __name__ == '__main__':
-    service_manager = ServiceManager({'subnet_tag': 'erigon'})
+    service_manager = ServiceManager(EXECUTOR_CFG)
     try:
         loop = asyncio.get_event_loop()
         main_task = loop.create_task(main(service_manager))

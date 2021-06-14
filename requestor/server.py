@@ -57,10 +57,11 @@ class UserDataMissing(Exception):
 
 
 def get_config():
-    cfg = {}
-    subnet_tag = os.environ.get('SUBNET_TAG', '')
-    if subnet_tag:
-        cfg['subnet_tag'] = subnet_tag
+    cfg = {
+        #   NOTE: budget == 10 is not enough to make it run for long
+        'budget': 10,
+        'subnet_tag': os.environ.get('SUBNET_TAG', 'erigon'),
+    }
     return cfg
 
 
