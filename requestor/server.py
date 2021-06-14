@@ -1,9 +1,8 @@
 from quart import Quart, request
 from quart_cors import cors
-from service_manager import ServiceManager
+from service_manager import ServiceManager, ServiceWrapper
 import erigon_services
 from collections import defaultdict
-from dataclasses import dataclass
 import json
 import os
 
@@ -17,37 +16,41 @@ app.user_erigons = defaultdict(dict)
 ERIGON_CLS = getattr(erigon_services, os.environ.get('ERIGON_CLASS', 'Erigon'))
 
 
-@dataclass
-class ErigonData():
-    erigon: ERIGON_CLS
-    name: str
-    init_params: dict
+class ErigonServiceWrapper(ServiceWrapper):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._name = None
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
 
     def api_repr(self):
-        erigon = self.erigon
-
-        if erigon.stopped:
+        if self.stopped:
             status = 'stopped'
-        elif not erigon.started:
+        elif not self.started:
             status = 'pending'
         else:
-            if erigon.service.url is None:
+            if self.service.url is None:
                 status = 'starting'
             else:
                 status = 'running'
 
         data = {
-            'id': erigon.id,
+            'id': self.id,
             'status': status,
+            'name': self.name,
+            'init_params': self.start_args[0],
         }
 
         if status == 'running':
-            data['url'] = erigon.service.url
-            data['auth'] = erigon.service.auth
-            data['network'] = erigon.service.network
-
-        data['name'] = self.name
-        data['init_params'] = self.init_params
+            data['url'] = self.service.url
+            data['auth'] = self.service.auth
+            data['network'] = self.service.network
 
         return data
 
@@ -87,7 +90,7 @@ async def get_user_id():
 async def get_instances():
     user_id = await get_user_id()
     erigons = list(app.user_erigons[user_id].values())
-    data = [erigon_data.api_repr() for erigon_data in erigons]
+    data = [erigon.api_repr() for erigon in erigons]
     return json.dumps(data), 200
 
 
@@ -104,15 +107,14 @@ async def create_instance():
         return "'params' should be an object", 400
 
     #   Initialize erigon
-    erigon = app.service_manager.create_service(ERIGON_CLS, [init_params])
+    erigon = app.service_manager.create_service(ERIGON_CLS, [init_params], ErigonServiceWrapper)
+    erigon.name = request_data.get('name', f'erigon_{erigon.id}')
 
     #   Save the data
-    name = request_data.get('name', f'erigon_{erigon.id}')
-    erigon_data = ErigonData(erigon, name, init_params)
     user_id = await get_user_id()
-    app.user_erigons[user_id][erigon.id] = erigon_data
+    app.user_erigons[user_id][erigon.id] = erigon
 
-    return erigon_data.api_repr(), 201
+    return erigon.api_repr(), 201
 
 
 @app.route('/stopInstance/<erigon_id>', methods=['POST'])
@@ -124,13 +126,13 @@ async def stop_instance(erigon_id):
         return 'Invalid user_id', 403
 
     try:
-        erigon_data = this_user_erigons[erigon_id]
+        erigon = this_user_erigons[erigon_id]
     except KeyError:
         return 'Invalid erigon_id', 404
 
-    erigon_data.erigon.stop()
+    erigon.stop()
 
-    return erigon_data.api_repr(), 200
+    return erigon.api_repr(), 200
 
 
 @app.errorhandler(UserDataMissing)

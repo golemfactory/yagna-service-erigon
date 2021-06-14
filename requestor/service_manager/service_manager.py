@@ -27,8 +27,9 @@ class ServiceManager():
         exception_handler = partial(golem_exception_handler, self)
         self.yapapi_connector = YapapiConnector(executor_cfg, exception_handler)
 
-    def create_service(self, service_cls: 'Type[Service]', start_args: 'List[Any]' = []):
-        service_wrapper = ServiceWrapper(service_cls, start_args)
+    def create_service(self, service_cls: 'Type[Service]', start_args: 'List[Any]' = [],
+                       service_wrapper_cls: 'Type[ServiceWrapper]' = ServiceWrapper):
+        service_wrapper = service_wrapper_cls(service_cls, start_args)
         self.yapapi_connector.create_instance(service_wrapper)
         self.service_wrappers.append(service_wrapper)
         return service_wrapper
