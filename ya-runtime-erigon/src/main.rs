@@ -5,7 +5,7 @@ use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering::Relaxed;
@@ -80,14 +80,10 @@ impl Runtime for ErigonRuntime {
     const MODE: RuntimeMode = RuntimeMode::Server;
 
     fn deploy<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
-        let data_dir = ctx.conf.data_dir.clone();
-        let chain_subdirs: Vec<PathBuf> = Network::iter_variant_names()
-            .map(|d| prepare_data_dir_path(&data_dir, &d.to_lowercase()))
-            .collect();
+        let data_dir = PathBuf::from(&ctx.conf.data_dir);
 
-        let data_dir_path = PathBuf::from(ctx.conf.data_dir.clone());
-        let parent_data_dir = data_dir_path.as_path();
-        if !(parent_data_dir.exists() && parent_data_dir.is_dir()) {
+        // check if parent data directory exists
+        if !(data_dir.exists() && data_dir.is_dir()) {
             panic!(
                 "Configuration 'data_dir' directory has to exists and needs to contain
                  the directory for every supported network, named of the network"
@@ -95,10 +91,12 @@ impl Runtime for ErigonRuntime {
         }
 
         // create all supported chains data subdirs
-        for pathbuf in chain_subdirs {
-            if !&pathbuf.is_dir() {
-                fs::create_dir(pathbuf.clone())
-                    .unwrap_or_else(|_| panic!("Unable to create subdir {:?}", &pathbuf));
+        for chain_subdir in
+            Network::iter_variant_names().map(|chain| chain_subdir(data_dir.as_path(), chain))
+        {
+            if !&chain_subdir.is_dir() {
+                fs::create_dir(&chain_subdir)
+                    .unwrap_or_else(|_| panic!("Unable to create subdir {:?}", &chain_subdir));
             }
         }
 
@@ -143,25 +141,24 @@ impl Runtime for ErigonRuntime {
         self.erigon_password = Some(password);
 
         // Spawn erigon processes
-        let data_dir_path = prepare_data_dir_path(&ctx.conf.data_dir.clone(), &chain);
+        let parent_dir = PathBuf::from(&ctx.conf.data_dir);
+        let data_dir = chain_subdir(parent_dir.as_path(), &chain);
         let mut erigon_pid = spawn_process(
             &mut Command::new(&path.join(ERIGON_BIN))
                 .arg("--chain")
-                .arg(chain.clone()),
-            &data_dir_path,
+                .arg(&chain),
+            &data_dir,
             &[""; 0],
         )
         .expect("Erigon: Failed to spawn");
 
-        let http_addr = ctx.conf.erigon_http_addr.clone();
-        let http_port = ctx.conf.erigon_http_port.clone();
         let rpcd_pid = spawn_process(
             &mut Command::new(&path.join(RPCDAEMON_BIN))
                 .arg("--http.addr")
-                .arg(http_addr)
+                .arg(&ctx.conf.erigon_http_addr)
                 .arg("--http.port")
-                .arg(http_port),
-            &data_dir_path,
+                .arg(&ctx.conf.erigon_http_port),
+            &data_dir,
             RPCDAEMON_PARAMS,
         );
         if !rpcd_pid.is_ok() {
@@ -205,30 +202,27 @@ impl Runtime for ErigonRuntime {
         let emitter = ctx.emitter.clone().unwrap();
 
         let (tx, rx) = oneshot::channel();
-        let public_addr = ctx.conf.public_addr.clone();
-        let password = self.erigon_password.clone();
-        let chain = self.erigon_chain.clone();
+
+        let erigon_status_data = serialize::json::json!(
+            {
+                "status": "running",
+                "url": &ctx.conf.public_addr,
+                "network": &self.erigon_chain,
+                "auth": {
+                    "user": AUTH_ERIGON_USER,
+                    "password": &self.erigon_password
+                }
+            }
+        );
 
         tokio::task::spawn_local(async move {
             // command execution started
             emitter.command_started(seq).await;
             // resolves the future returned by `run_command`
             let _ = tx.send(seq);
-
-            let erigon_mock_data = serialize::json::json!(
-                {
-                    "status": "running",
-                    "url": public_addr,
-                    "network": chain,
-                    "auth": {
-                        "user": AUTH_ERIGON_USER,
-                        "password": password
-                    }
-                }
-            );
             let stdout = format!(
                 "[{}] output for command: {:?}. ERIGON: {}",
-                seq, command, erigon_mock_data
+                seq, command, erigon_status_data
             )
             .as_bytes()
             .to_vec();
@@ -272,8 +266,8 @@ fn spawn_process(cmd: &mut Command, datadir: &PathBuf, params: &[&str]) -> std::
         .spawn()
 }
 
-fn prepare_data_dir_path(parent_dir: &String, chain: &String) -> PathBuf {
-    PathBuf::from(parent_dir).join(chain)
+fn chain_subdir(parent_dir: &Path, chain: &str) -> PathBuf {
+    parent_dir.join(chain.to_lowercase())
 }
 
 fn generate_password_file(
