@@ -23,8 +23,6 @@ def state(service_wrapper):
 
 
 async def main(service_manager):
-    await service_manager.start()
-
     service_cnt = 1
     service_cls = erigon_services.Erigon
     start_args = [{'network': 'kovan'}]

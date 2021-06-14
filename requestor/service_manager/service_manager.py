@@ -2,6 +2,7 @@ import asyncio
 from yapapi.log import enable_default_logger, log_summary, log_event_repr
 from .service_wrapper import ServiceWrapper
 from .yapapi_connector import YapapiConnector
+from functools import partial
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -16,9 +17,15 @@ DEFAULT_EXECUTOR_CFG = {
 }
 
 
-async def stop_on_golem_exception(service_manager):
+async def stop_on_golem_exception(service_manager, e):
+    print("GOLEM FAILED\n", e)
+    print("STOPPING THE LOOP")
     loop = asyncio.get_event_loop()
     loop.stop()
+
+
+async def restart_on_golem_exception(service_manager, e):
+    pass
 
 
 class ServiceManager():
@@ -29,8 +36,10 @@ class ServiceManager():
 
         enable_default_logger(log_file='log.log')
 
-        # import os
-        # os.environ['YAGNA_APPKEY'] = 'a'
+        self._start()
+
+        import os
+        os.environ['YAGNA_APPKEY'] = 'a'
 
     def create_service(self, service_cls: 'Type[Service]', start_args: 'List[Any]' = []):
         service_wrapper = ServiceWrapper(service_cls, start_args)
@@ -42,34 +51,24 @@ class ServiceManager():
         for service_wrapper in self.service_wrappers:
             service_wrapper.stop()
         await self.yapapi_connector.stop()
-        self.golem_exception_handler.cancel()
 
-    async def start(self):
+    def _start(self):
         self.service_wrappers = []
-        event = self._prepare_exception_handler()
-        self.yapapi_connector = YapapiConnector(self.executor_cfg, event)
+        exception_handler = self._prepare_exception_handler()
+        self.yapapi_connector = YapapiConnector(self.executor_cfg, exception_handler)
 
     def _prepare_exception_handler(self):
-        handler = self._parse_handler_param()
-        event = asyncio.Event()
-
-        async def handle_exception():
-            await event.wait()
-            await handler(self)
-
-        self.golem_exception_handler = asyncio.create_task(handle_exception())
-
-        return event
+        handler_func = self._parse_handler_param()
+        return partial(handler_func, self)
 
     def _parse_handler_param(self):
         handler_param = self.golem_exception_handler
 
         if handler_param == 'stop':
-            handler = stop_on_golem_exception
+            return stop_on_golem_exception
         elif handler_param == 'restart':
-            handler = self._restart_on_golem_exception
+            return restart_on_golem_exception
         elif callable(handler_param):
-            handler = handler_param
+            return handler_param
         else:
             raise ValueError("golem_exception_handler should be either 'start' or 'restart' or a callable")
-        return handler
