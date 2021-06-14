@@ -12,9 +12,7 @@ PROVIDER_CNT = int(os.environ.get('PROVIDER_CNT', '1'))
 
 def create_request(method, endpoint, user_id, data={}):
     url = os.path.join(BASE_URL, endpoint)
-    data['user_id'] = user_id
-
-    req = httpx.Request(method, url, json=data)
+    req = httpx.Request(method, url, json=data, headers={'Authorization': f'Bearer {user_id}'})
 
     return req
 
@@ -29,7 +27,7 @@ def instance_data(user_id):
 
 
 async def check_data(client, not_started_ids, user_id):
-    req = create_request('POST', 'getInstances', user_id)
+    req = create_request('GET', 'getInstances', user_id)
     res = await client.send(req)
     assert res.status_code == 200
     data = res.json()[-1]
@@ -43,7 +41,7 @@ async def check_data(client, not_started_ids, user_id):
 
 
 async def get_any_erigon(client, user_id):
-    req = create_request('POST', 'getInstances', user_id)
+    req = create_request('GET', 'getInstances', user_id)
     res = await client.send(req)
     assert res.status_code == 200
     return res.json()[-1]
@@ -53,7 +51,7 @@ async def get_any_erigon(client, user_id):
 @pytest.mark.skipif(not BASE_URL, reason="BASE_URL is required")
 @pytest.mark.skipif(PROVIDER_CNT < 3, reason="Not enough providers")
 async def test_api():
-    user_ids = list(range(3))
+    user_ids = list(range(10**10, 10**10 + 3))
 
     #   1.  Send many requests at the same time
     async with httpx.AsyncClient() as client:

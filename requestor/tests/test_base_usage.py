@@ -7,15 +7,13 @@ BASE_URL = os.environ.get('BASE_URL')
 if BASE_URL and '://' not in BASE_URL:
     BASE_URL = 'http://' + BASE_URL
 
-USER_ID = 123
+USER_ID = 1231231231
 ERIGON_NAME = 'test_erigon'
 
 
 def run_request(method, endpoint, data={}):
-    data = data.copy()
-    data['user_id'] = USER_ID
     url = os.path.join(BASE_URL, endpoint)
-    res = requests.request(method, url, json=data)
+    res = requests.request(method, url, json=data, headers={'Authorization': f'Bearer {USER_ID}'})
     return res.status_code, res.json()
 
 
@@ -39,7 +37,7 @@ def test_api(network):
 
     #   2.  Wait for the instance to run
     for i in range(10):
-        status, data = run_request('POST', 'getInstances')
+        status, data = run_request('GET', 'getInstances')
         data = data[-1]
         assert status == 200
         if data['status'] == 'running':
@@ -68,7 +66,7 @@ def test_api(network):
     status, data = run_request('POST', f'stopInstance/{erigon_id}')
     assert status == 200
 
-    status, data = run_request('POST', 'getInstances')
+    status, data = run_request('GET', 'getInstances')
     assert status == 200
     data = data[-1]
     assert (data['status'], data['id'], data['init_params'], data['name']) == \
