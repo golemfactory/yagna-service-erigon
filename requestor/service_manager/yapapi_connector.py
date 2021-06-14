@@ -29,6 +29,8 @@ class YapapiConnector():
         for task in self.run_service_tasks:
             task.cancel()
 
+        #   NOTE: we're not cancelling the task because we want Golem to exit gracefully (__aexit__)
+        #   TODO: is this really necessary?
         await self.executor_task
 
     async def run(self):
