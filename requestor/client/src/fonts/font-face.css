@@ -1,0 +1,29 @@
+@font-face {
+  font-family: 'Inter Bold';
+  font-weight: 700;
+  src: local('Inter-Bold.ttf'), url('Inter-Bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Inter Medium';
+  font-weight: 500;
+  src: local('Inter-Medium.ttf'), url('Inter-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Inter Regular';
+  font-weight: 400;
+  src: local('Inter-Regular.ttf'), url('Inter-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Roboto Mono Bold';
+  font-weight: 700;
+  src: local('RobotoMono-Bold.ttf'), url('RobotoMono-Bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Roboto Mono Medium';
+  font-weight: 500;
+  src: local('RobotoMono-Medium.ttf'), url('RobotoMono-Medium.ttf') format('truetype');
+}
