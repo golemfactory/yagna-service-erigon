@@ -21,8 +21,8 @@ RUN python3 -m pip install -r requirements.txt
 #   Cleanup
 RUN rm yagna.deb requirements.txt
 
-COPY yagna_init.sh .
-RUN chmod +x yagna_init.sh
+COPY yagna_and_server_init.sh .
+RUN chmod +x yagna_and_server_init.sh
 
 COPY server.py       .
 COPY service_manager service_manager
@@ -30,8 +30,4 @@ COPY erigon_services erigon_services
 
 ENV PYTHONUNBUFFERED=1
 
-ENTRYPOINT ["bash", "-c", "         \
-                ./yagna_init.sh;    \
-                YAGNA_APPKEY=$(yagna app-key list | tail -2 | head -1 | head -c53 | tail -c32) \
-                PYTHONPATH=yapapi_repo:$PYTHONPATH \
-                    python3 server.py"  ]
+ENTRYPOINT ./yagna_and_server_init.sh
