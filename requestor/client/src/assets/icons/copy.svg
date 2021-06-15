@@ -1,0 +1,15 @@
+<svg width="11px" height="11px" viewBox="0 0 11 11" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Erigolem-Service-Running" transform="translate(-575.000000, -460.000000)" fill="#0070DF" fill-rule="nonzero">
+            <g id="NODE-STATUS-CONTAINER" transform="translate(92.000000, 277.000000)">
+                <g id="Container-Content" transform="translate(41.000000, 60.000000)">
+                    <g id="Group-2" transform="translate(329.000000, 122.000000)">
+                        <g id="copy" transform="translate(113.000000, 1.000000)">
+                            <path d="M7.85714286,3.14285714 L7.85714286,0 L1.17857143,0 C0.527664402,0 0,0.527664402 0,1.17857143 L0,7.85714286 L3.14285714,7.85714286 L3.14285714,11 L11,11 L11,3.14285714 L7.85714286,3.14285714 Z M0.785714286,1.17857143 C0.785714286,0.96160242 0.96160242,0.785714286 1.17857143,0.785714286 L7.07142857,0.785714286 L7.07142857,7.07142857 L0.785714286,7.07142857 L0.785714286,1.17857143 Z M10.2142857,10.2142857 L3.92857143,10.2142857 L3.92857143,7.85714286 L7.85714286,7.85714286 L7.85714286,3.92857143 L10.2142857,3.92857143 L10.2142857,10.2142857 Z" id="Shape"></path>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
