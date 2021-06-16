@@ -11,7 +11,7 @@ use tokio::process::{Child, Command};
 use ya_runtime_sdk::*;
 
 const AUTH_ERIGON_USER: &str = "erigolem";
-const ERIGON_BIN: &str = "tg";
+const ERIGON_BIN: &str = "erigon";
 const RPCDAEMON_BIN: &str = "rpcdaemon";
 const DEFAULT_CHAIN: Network = Network::Goerli;
 
