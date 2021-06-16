@@ -1,4 +1,3 @@
-use futures::channel::oneshot;
 use futures::FutureExt;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
@@ -7,8 +6,6 @@ use serde_json::Value;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
-use std::sync::atomic::AtomicU64;
-use std::sync::atomic::Ordering::Relaxed;
 use titlecase::titlecase;
 use tokio::process::{Child, Command};
 use ya_runtime_sdk::*;
@@ -61,7 +58,7 @@ impl Default for ErigonConf {
             passwd_file_path: "/etc/nginx/erigon_htpasswd".to_string(),
             password_default_length: 15,
             erigon_http_addr: "127.0.0.1".to_string(),
-            erigon_http_port: "8545".to_string(),
+            erigon_http_port: "8555".to_string(),
         }
     }
 }
@@ -69,7 +66,6 @@ impl Default for ErigonConf {
 #[derive(Default, RuntimeDef)]
 #[conf(ErigonConf)]
 pub struct ErigonRuntime {
-    seq: AtomicU64,
     erigon_pid: Option<Child>,
     rpcdaemon_pid: Option<Child>,
     erigon_password: Option<String>,
@@ -77,8 +73,6 @@ pub struct ErigonRuntime {
 }
 
 impl Runtime for ErigonRuntime {
-    const MODE: RuntimeMode = RuntimeMode::Server;
-
     fn deploy<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
         let data_dir = PathBuf::from(&ctx.conf.data_dir);
 
@@ -100,24 +94,11 @@ impl Runtime for ErigonRuntime {
             }
         }
 
-        async move {
-            Ok(serialize::json::json!(
-                {
-                    "startMode":"blocking",
-                    "valid":{"Ok":""},
-                    "vols":[]
-                }
-            ))
-        }
-        .boxed_local()
+        async move { Ok(None) }.boxed_local()
     }
 
     fn start<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
-        let chain = if let ya_runtime_sdk::cli::Command::Start { args } = &ctx.cli.command {
-            get_chain_from_config(args.into_iter().next())
-        } else {
-            DEFAULT_CHAIN
-        };
+        let chain = get_chain_from_config(ctx.cli.command.args().into_iter().next());
         let chain = chain.to_string().to_lowercase();
         self.erigon_chain = Some(chain.clone());
 
@@ -169,7 +150,7 @@ impl Runtime for ErigonRuntime {
         self.erigon_pid = Some(erigon_pid);
         self.rpcdaemon_pid = Some(rpcd_pid);
 
-        async move { Ok(serialize::json::json!({ "network": chain })) }.boxed_local()
+        async move { Ok(Some(serialize::json::json!({ "network": chain }))) }.boxed_local()
     }
 
     fn stop<'a>(&mut self, _: &mut Context<Self>) -> EmptyResponse<'a> {
@@ -194,18 +175,12 @@ impl Runtime for ErigonRuntime {
 
     fn run_command<'a>(
         &mut self,
-        command: RunProcess,
+        _cmd: RunProcess,
         _mode: RuntimeMode,
         ctx: &mut Context<Self>,
     ) -> ProcessIdResponse<'a> {
-        let seq = self.seq.fetch_add(1, Relaxed);
-        let emitter = ctx.emitter.clone().unwrap();
-
-        let (tx, rx) = oneshot::channel();
-
         let erigon_status_data = serialize::json::json!(
             {
-                "status": "running",
                 "url": &ctx.conf.public_addr,
                 "network": &self.erigon_chain,
                 "auth": {
@@ -215,40 +190,11 @@ impl Runtime for ErigonRuntime {
             }
         );
 
-        tokio::task::spawn_local(async move {
-            // command execution started
-            emitter.command_started(seq).await;
-            // resolves the future returned by `run_command`
-            let _ = tx.send(seq);
-            let stdout = format!(
-                "[{}] output for command: {:?}. ERIGON: {}",
-                seq, command, erigon_status_data
-            )
-            .as_bytes()
-            .to_vec();
-
-            tokio::time::delay_for(std::time::Duration::from_millis(1)).await;
-            emitter.command_stdout(seq, stdout).await;
-            emitter.command_stopped(seq, 0).await;
-        });
-
-        async move {
-            // awaits `tx.send`
-            Ok(rx.await.unwrap())
-        }
-        .boxed_local()
-    }
-
-    fn offer<'a>(&mut self, _ctx: &mut Context<Self>) -> OutputResponse<'a> {
-        async move {
-            Ok(serialize::json::json!(
-                {
-                    "constraints": "",
-                    "properties": {}
-                }
-            ))
-        }
-        .boxed_local()
+        ctx.command(|mut run_ctx| async move {
+            let stdout = format!("{}", erigon_status_data);
+            run_ctx.stdout(stdout).await;
+            Ok(())
+        })
     }
 }
 
