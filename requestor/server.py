@@ -20,17 +20,9 @@ ERIGON_CLS = getattr(erigon_services, os.environ.get('ERIGON_CLASS', 'Erigon'))
 class ErigonServiceWrapper(ServiceWrapper):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._name = None
+        self.name = None
         self._created_at = datetime.utcnow()
         self._stopped_at = None
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, name):
-        self._name = name
 
     def stop(self):
         super().stop()
