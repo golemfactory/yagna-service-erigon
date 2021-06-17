@@ -51,7 +51,7 @@ async def get_any_erigon(client, user_id):
 @pytest.mark.skipif(not BASE_URL, reason="BASE_URL is required")
 @pytest.mark.skipif(PROVIDER_CNT < 3, reason="Not enough providers")
 async def test_api():
-    user_ids = list(range(10**10, 10**10 + 3))
+    user_ids = list(range(10**41, 10**41 + 3))
 
     #   1.  Send many requests at the same time
     async with httpx.AsyncClient() as client:

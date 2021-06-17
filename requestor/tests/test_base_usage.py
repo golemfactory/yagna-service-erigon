@@ -7,7 +7,7 @@ BASE_URL = os.environ.get('BASE_URL')
 if BASE_URL and '://' not in BASE_URL:
     BASE_URL = 'http://' + BASE_URL
 
-USER_ID = 1231231231
+USER_ID = 10 ** 41
 ERIGON_NAME = 'test_erigon'
 
 

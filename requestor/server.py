@@ -99,10 +99,8 @@ def get_user_id():
     else:
         raise UserDataMissing('Authorization header should start with "Bearer "')
 
-    if len(token) < 10:
-        #   This token is surely invalid, and we don't know exactly how the correct
-        #   tokens look like -> this check is the best we can do
-        raise UserDataMissing('Token is expected to be at least 10 characters long')
+    if len(token) != 42:
+        raise UserDataMissing('Token is expected to be exactly 42 characters long')
 
     return token
 
