@@ -10,17 +10,24 @@ if BASE_URL and '://' not in BASE_URL:
 PROVIDER_CNT = int(os.environ.get('PROVIDER_CNT', '1'))
 
 
-def create_request(method, endpoint, user_id):
+def create_request(method, endpoint, user_id, data={}):
     url = os.path.join(BASE_URL, endpoint)
-    user_id_data = {'user_id': user_id}
-
-    req = httpx.Request(method, url, json=user_id_data)
+    req = httpx.Request(method, url, json=data, headers={'Authorization': f'Bearer {user_id}'})
 
     return req
 
 
+def instance_data(user_id):
+    return {
+        'params': {
+            'network': 'goerli',
+        },
+        'name': f'erigon_created_by_{user_id}',
+    }
+
+
 async def check_data(client, not_started_ids, user_id):
-    req = create_request('POST', 'getInstances', user_id)
+    req = create_request('GET', 'getInstances', user_id)
     res = await client.send(req)
     assert res.status_code == 200
     data = res.json()[-1]
@@ -33,17 +40,24 @@ async def check_data(client, not_started_ids, user_id):
         print(f"NOT STARTED YET FOR USER {user_id}")
 
 
+async def get_any_erigon(client, user_id):
+    req = create_request('GET', 'getInstances', user_id)
+    res = await client.send(req)
+    assert res.status_code == 200
+    return res.json()[-1]
+
+
 @pytest.mark.asyncio
 @pytest.mark.skipif(not BASE_URL, reason="BASE_URL is required")
 @pytest.mark.skipif(PROVIDER_CNT < 3, reason="Not enough providers")
 async def test_api():
-    user_ids = list(range(3))
+    user_ids = list(range(10**41, 10**41 + 3))
 
     #   1.  Send many requests at the same time
     async with httpx.AsyncClient() as client:
         requests = []
         for user_id in user_ids:
-            req = create_request('POST', 'createInstance', user_id)
+            req = create_request('POST', 'createInstance', user_id, instance_data(user_id))
 
             requests.append(client.send(req))
 
@@ -69,8 +83,16 @@ async def test_api():
     async with httpx.AsyncClient() as client:
         requests = []
         for user_id in user_ids:
-            req = create_request('POST', 'stopInstance', user_id)
+            erigon = await get_any_erigon(client, user_id)
+            erigon_id = erigon['id']
+            req = create_request('POST', f'stopInstance/{erigon_id}', user_id)
 
             requests.append(client.send(req))
 
         await asyncio.gather(*requests)
+
+    #   4.  Check if everything is stopped
+    async with httpx.AsyncClient() as client:
+        for user_id in user_ids:
+            erigon = await get_any_erigon(client, user_id)
+            assert erigon['status'] == 'stopped'
