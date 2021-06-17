@@ -13,8 +13,6 @@ const DashboardPage = () => {
 
   const { account } = useWeb3React();
 
-  const data = useMemo(() => ({ user_id: account }), [account]);
-
   const handleError = () => {
     setNodes([]);
     notify(<Toast />, 'error');
@@ -22,10 +20,10 @@ const DashboardPage = () => {
 
   const handleFetchNodes = useCallback(
     async () =>
-      await httpRequest({ path: 'getInstances', data })
+      await httpRequest({ method: 'get', path: 'getInstances', account })
         .then((instances: NodeProps[]) => setNodes(instances))
         .catch(handleError),
-    [data],
+    [account],
   );
 
   useEffect(() => {
@@ -43,13 +41,13 @@ const DashboardPage = () => {
   const handleStartNode = ({ name, network }: NodeFormData) => {
     nodeForm.toggleOpen && nodeForm.toggleClick();
 
-    httpRequest({ path: 'createInstance', data: { ...data, name, params: { network } } })
+    httpRequest({ path: 'createInstance', account, data: { name, params: { network } } })
       .then(() => handleFetchNodes())
       .catch(handleError);
   };
 
   const handleStopNode = (id: string) =>
-    httpRequest({ path: 'stopInstance', id, data })
+    httpRequest({ path: 'stopInstance', id, account })
       .then(() => handleFetchNodes())
       .catch(handleError);
 

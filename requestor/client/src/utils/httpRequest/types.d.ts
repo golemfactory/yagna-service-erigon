@@ -5,5 +5,6 @@ export type Url = {
 
 export type HttpRequest = {
   method?: string;
-  data: object;
+  account: string | null | undefined;
+  data?: object;
 } & Url;
