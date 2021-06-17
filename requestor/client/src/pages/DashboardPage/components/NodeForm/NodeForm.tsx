@@ -9,7 +9,7 @@ import { StyledCol, StyledField, StyledForm, StyledNetworks, StyledRadioField } 
 
 const networks = [
   { id: 'mainnet', name: network.name, disabled: true },
-  { id: 'kovan', name: network.name },
+  { id: 'kovan', name: network.name, disabled: true },
   { id: 'goerli', name: network.name },
   { id: 'ropsten', name: network.name },
   { id: 'rinkeby', name: network.name },
