@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Row } from 'react-grid-system';
 import { useWeb3React } from '@web3-react/core';
 import { Button, Layout, notify, Toast } from 'components';
 import { useToggle } from 'hooks/useToggle';
 import { Node, NodeForm, NodeFormData, NodeProps } from './components';
 import httpRequest from 'utils/httpRequest';
-import { StyledButton, StyledParagraph, StyledPlaceholder } from './styles';
+import { StyledButton, StyledCol, StyledParagraph, StyledPlaceholder } from './styles';
 
 const DashboardPage = () => {
   const [nodes, setNodes] = useState<NodeProps[]>([]);
@@ -55,7 +56,11 @@ const DashboardPage = () => {
     <Layout>
       {nodeForm.toggleOpen ? (
         <>
-          <StyledButton label="Cancel" onClick={nodeForm.toggleClick} outlined />
+          <Row>
+            <StyledCol xs={4} offset={{ xs: 8 }}>
+              <StyledButton label="Cancel" onClick={nodeForm.toggleClick} outlined />
+            </StyledCol>
+          </Row>
           <NodeForm onSubmit={handleStartNode} />
         </>
       ) : !!nodes.length ? (

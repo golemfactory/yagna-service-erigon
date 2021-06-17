@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { Col } from 'react-grid-system';
 import Button from 'components/Button';
 import errorImg from 'assets/images/error.svg';
 
@@ -26,4 +27,10 @@ export const StyledParagraph = styled.p`
 
 export const StyledButton = styled(Button)`
   margin: 6rem 0 4rem !important;
+`;
+
+export const StyledCol = styled(Col)`
+  button {
+    margin-left: -1.5rem !important;
+  }
 `;
