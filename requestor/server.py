@@ -97,7 +97,7 @@ def get_user_id():
     if auth.startswith("Bearer "):
         token = auth[7:]
     else:
-        raise UserDataMissing('Authorization header should start with "Bearer: "')
+        raise UserDataMissing('Authorization header should start with "Bearer "')
 
     if len(token) < 10:
         #   This token is surely invalid, and we don't know exactly how the correct
