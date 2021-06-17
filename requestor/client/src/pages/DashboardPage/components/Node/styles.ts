@@ -30,15 +30,17 @@ export const StyledCol = styled(Col)`
   }
 `;
 
-export const StyledName = styled.span`
-  font-family: 'Roboto Mono Bold', monospace;
-  font-size: 1.8rem;
+export const StyledSpan = styled.span`
   line-height: 2.4rem;
 `;
 
-export const StyledNetwork = styled.span`
+export const StyledName = styled(StyledSpan)`
+  font-family: 'Roboto Mono Bold', monospace;
+  font-size: 1.8rem;
+`;
+
+export const StyledNetwork = styled(StyledSpan)`
   font-size: 1.4rem;
-  line-height: 2.4rem;
 `;
 
 const statusColor = (state: string) => {

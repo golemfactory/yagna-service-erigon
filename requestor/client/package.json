@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@metamask/detect-provider": "^1.2.0",
+    "@types/date-fns": "^2.6.0",
     "@types/lodash": "^4.14.170",
     "@types/react": "^17.0.9",
     "@types/react-copy-to-clipboard": "^5.0.0",
@@ -12,6 +13,8 @@
     "@types/superagent": "^4.1.11",
     "@web3-react/core": "^6.1.9",
     "@web3-react/injected-connector": "^6.0.7",
+    "date-fns": "^2.22.1",
+    "date-fns-tz": "^1.1.4",
     "lodash": "^4.17.21",
     "react": "^17.0.2",
     "react-copy-to-clipboard": "^5.0.3",

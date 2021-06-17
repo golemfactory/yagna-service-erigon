@@ -7,4 +7,6 @@ export type NodeProps = {
   status: status.starting | status.pending | status.running | status.stopped;
   url: string;
   auth: { user: string; password: string };
+  created_at: string;
+  stopped_at?: string;
 };
