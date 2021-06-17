@@ -18,7 +18,7 @@ class Erigon(Service):
         self.auth = None
 
         #   NOTE: this is the network provider says it is running on, not the one
-        #         requested (although those two should match)
+        #         requested (although these two should match)
         self.network = None
 
     @classmethod
