@@ -33,8 +33,8 @@
 
 # use requestor server
 
-All requests except static file request must contain a JSON body with 'user\_id': 'the\_thing\_from\_metamask'.
+All requests must contain a header {'Authorization': 'Bearer [SOME-TOKEN-AT-LEAST-10-CHARACTERS-LONG]'}
 
-    POST /getInstances      - list of all instances created by the user (includes stopped instances)
-    POST /createInstance    - create new instance, this requires "params" along the "user_id" in body and also accepts optional "name"
+    GET  /getInstances      - list of all instances created by the user (includes stopped instances)
+    POST /createInstance    - create new instance, this requires "params" in body and also accepts optional "name"
     POST /stopInstance/<id> - stop instance with id <id>

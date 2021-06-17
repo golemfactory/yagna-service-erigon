@@ -80,17 +80,26 @@ async def close_service_manager():
     await app.service_manager.close()
 
 
-async def get_user_id():
-    data = await request.json
+def get_user_id():
     try:
-        return data['user_id']
+        auth = request.headers['Authorization']
     except KeyError:
-        raise UserDataMissing
+        raise UserDataMissing('Missing authorization header')
+
+    if auth.startswith("Bearer "):
+        token = auth[7:]
+    else:
+        raise UserDataMissing('Authorization header should start with "Bearer "')
+
+    if len(token) != 42:
+        raise UserDataMissing('Token is expected to be exactly 42 characters long')
+
+    return token
 
 
-@app.route('/getInstances', methods=['POST'])
+@app.route('/getInstances', methods=['GET'])
 async def get_instances():
-    user_id = await get_user_id()
+    user_id = get_user_id()
     erigons = list(app.user_erigons[user_id].values())
     data = [erigon.api_repr() for erigon in erigons]
     return json.dumps(data), 200
@@ -98,6 +107,8 @@ async def get_instances():
 
 @app.route('/createInstance', methods=['POST'])
 async def create_instance():
+    user_id = get_user_id()
+
     #   Get init params from request
     request_data = await request.json
     try:
@@ -113,7 +124,6 @@ async def create_instance():
     erigon.name = request_data.get('name', f'erigon_{erigon.id}')
 
     #   Save the data
-    user_id = await get_user_id()
     app.user_erigons[user_id][erigon.id] = erigon
 
     return erigon.api_repr(), 201
@@ -121,7 +131,7 @@ async def create_instance():
 
 @app.route('/stopInstance/<erigon_id>', methods=['POST'])
 async def stop_instance(erigon_id):
-    user_id = await get_user_id()
+    user_id = get_user_id()
     try:
         this_user_erigons = app.user_erigons[user_id]
     except KeyError:
@@ -139,7 +149,7 @@ async def stop_instance(erigon_id):
 
 @app.errorhandler(UserDataMissing)
 def handle_bad_request(e):
-    return 'All requests require {"user_id": "anything"} body', 400
+    return {'msg': str(e)}, 400
 
 
 if __name__ == '__main__':
