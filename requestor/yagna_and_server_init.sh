@@ -9,7 +9,7 @@
 #   1.  Start yagna in the background & wait until it starts
 set -m
 
-/usr/bin/yagna service run > yagna_requestor_log 2>1 &
+/usr/bin/yagna service run > yagna_requestor_log 2>&1 &
 
 sleep 5
 
