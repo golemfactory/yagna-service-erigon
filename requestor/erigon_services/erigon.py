@@ -8,7 +8,7 @@ from yapapi.services import Service
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import List
-    from yapapi.executor.events import CommandExecuted
+    from yapapi.events import CommandExecuted
 
 
 class Erigon(Service):
