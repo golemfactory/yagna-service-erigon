@@ -45,12 +45,17 @@ export const StyledNetwork = styled(StyledSpan)`
 
 const statusColor = (state: string) => {
   switch (state) {
+    case status.pending:
+      return color.yellow;
+    case status.starting:
+    case status.stopping:
+      return color.orange;
     case status.running:
       return color.green;
     case status.stopped:
       return color.red;
     default:
-      return color.yellow;
+      return color.grey;
   }
 };
 

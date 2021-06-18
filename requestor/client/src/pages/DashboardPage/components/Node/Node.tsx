@@ -20,7 +20,7 @@ import {
   StyledStatus,
 } from './styles';
 
-const Node = ({ node, children }: { node: NodeProps; children: ReactNode }) => {
+const Node = ({ node, children }: { node: NodeProps; children?: ReactNode }) => {
   const handleCopy = () => notify(<Toast message="Copied!" />, 'success');
 
   const password = useToggle({});
@@ -51,7 +51,7 @@ const Node = ({ node, children }: { node: NodeProps; children: ReactNode }) => {
           <StyledSpan>{renderDate(node.stopped_at)}</StyledSpan>
         </StyledCol>
         <StyledCol xs={4} offset={{ xs: 0 }}>
-          {node.status !== status.stopped && children}
+          {![status.stopping, status.stopped].includes(node.status) && children}
         </StyledCol>
       </Row>
       {node.status !== status.stopped && (

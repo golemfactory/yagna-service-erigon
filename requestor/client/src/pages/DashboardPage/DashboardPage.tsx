@@ -49,7 +49,7 @@ const DashboardPage = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       handleFetchNodes();
-    }, 2000);
+    }, 5000);
 
     return () => clearTimeout(timer);
   });
@@ -64,7 +64,12 @@ const DashboardPage = () => {
 
   const handleStopNode = (id: string) =>
     httpRequest({ path: 'stopInstance', id, account })
-      .then(() => handleFetchNodes())
+      .then(() =>
+        setNodes({
+          active: active.map((node: NodeProps) => (node.id === id ? { ...node, status: status.stopping } : node)),
+          stopped,
+        }),
+      )
       .catch(handleError);
 
   return (
@@ -92,11 +97,7 @@ const DashboardPage = () => {
             </TabPanel>
             <TabPanel>
               {!!stopped.length ? (
-                stopped.map((node: NodeProps) => (
-                  <Node key={node.id} node={node}>
-                    <Button label="Stop node" onClick={() => handleStopNode(node.id)} />
-                  </Node>
-                ))
+                stopped.map((node: NodeProps) => <Node key={node.id} node={node} />)
               ) : (
                 <StyledParagraph style={{ margin: '8rem 0' }}>
                   Ooops! It looks like you don't have any node stopped

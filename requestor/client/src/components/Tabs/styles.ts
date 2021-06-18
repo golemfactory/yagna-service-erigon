@@ -45,8 +45,6 @@ export const StyledTabs = styled(Tabs)`
 
   .react-tabs__tab-panel {
     display: none;
-
-    padding-bottom: 10rem;
   }
 
   .react-tabs__tab-panel--selected {
