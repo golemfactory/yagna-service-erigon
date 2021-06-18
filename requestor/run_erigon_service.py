@@ -11,7 +11,7 @@ EXECUTOR_CFG = {
 
 async def main(service_manager):
     service_cnt = 1
-    start_args = [{'network': 'kovan'}]
+    start_args = [{'network': 'rinkeby'}]
 
     services = [service_manager.create_service(Erigon, start_args) for _ in range(service_cnt)]
 

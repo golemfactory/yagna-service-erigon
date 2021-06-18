@@ -24,7 +24,7 @@ def erigon_call_status(url, user, password):
 
 
 @pytest.mark.skipif(not BASE_URL, reason="BASE_URL is required")
-@pytest.mark.parametrize('network', ('kovan', 'rinkeby', 'ropsten', 'goerli'))
+@pytest.mark.parametrize('network', ('rinkeby', 'ropsten', 'goerli'))
 def test_api(network):
     #   1.  Create the instance
     init_params = {'network': network}
