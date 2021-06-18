@@ -1,7 +1,7 @@
 import asyncio
 
 from service_manager import ServiceManager
-import erigon_services
+from server.erigon_service import Erigon
 
 EXECUTOR_CFG = {
     'budget': 1,
@@ -11,10 +11,9 @@ EXECUTOR_CFG = {
 
 async def main(service_manager):
     service_cnt = 1
-    service_cls = erigon_services.Erigon
     start_args = [{'network': 'kovan'}]
 
-    services = [service_manager.create_service(service_cls, start_args) for _ in range(service_cnt)]
+    services = [service_manager.create_service(Erigon, start_args) for _ in range(service_cnt)]
 
     for service in services:
         print(f"New service starting: {service}")

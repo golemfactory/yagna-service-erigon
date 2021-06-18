@@ -24,8 +24,8 @@ RUN rm yagna.deb requirements.txt
 COPY yagna_and_server_init.sh .
 RUN chmod +x yagna_and_server_init.sh
 
-COPY server.py       .
-COPY erigon_services erigon_services
+COPY server        server
+COPY run_server.py run_server.py
 
 ENV PYTHONUNBUFFERED=1
 

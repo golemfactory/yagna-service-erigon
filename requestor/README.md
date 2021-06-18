@@ -6,11 +6,8 @@
     
     #   Run the "production"-like environment (the default subnet tag is 'erigon')
     docker run -p 5000:5000 erigon-server
-
-    #   Run on devnet with a mocked Erigon
-    docker run -p 5000:5000 -e ERIGON_CLASS=PseudoErigon -e SUBNET_TAG=devnet-beta.2 erigon-server 
     
-    #   Run with a real Erigon, on some other subnet
+    #   Run on some other subnet
     docker run -p 5000:5000 -e SUBNET_TAG=some_subnet_with_erigon erigon-server
 
 # stop requestor server gracefully

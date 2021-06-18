@@ -1,11 +1,11 @@
 from quart import Quart, request
 from quart_cors import cors
-from service_manager import ServiceManager, ServiceWrapper
-import erigon_services
+from service_manager import ServiceManager
 from collections import defaultdict
 import json
-import os
-from datetime import datetime
+
+from .erigon_service import Erigon
+from .erigon_service_wrapper import ErigonServiceWrapper
 
 app = Quart(__name__)
 cors(app)
@@ -14,55 +14,13 @@ cors(app)
 app.user_erigons = defaultdict(dict)
 
 
-ERIGON_CLS = getattr(erigon_services, os.environ.get('ERIGON_CLASS', 'Erigon'))
-
-
-class ErigonServiceWrapper(ServiceWrapper):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.name = None
-        self._created_at = datetime.utcnow()
-        self._stopped_at = None
-
-    def stop(self):
-        super().stop()
-        if self._stopped_at is None:
-            self._stopped_at = datetime.utcnow()
-
-    def api_repr(self):
-        data = {
-            'id': self.id,
-            'status': self.status,
-            'name': self.name,
-            'init_params': self.start_args[0],
-            'created_at': self._created_at.isoformat(),
-        }
-        if self.status == 'running':
-            data['url'] = self.service.url
-            data['auth'] = self.service.auth
-            data['network'] = self.service.network
-        elif self.stopped:
-            data['stopped_at'] = self._stopped_at.isoformat()
-
-        return data
-
-
 class UserDataMissing(Exception):
     pass
 
 
-def get_config():
-    cfg = {
-        #   NOTE: budget == 10 is not enough to make it run for long
-        'budget': 10,
-        'subnet_tag': os.environ.get('SUBNET_TAG', 'erigon'),
-    }
-    return cfg
-
-
 @app.before_serving
-async def startup():
-    app.service_manager = ServiceManager(get_config())
+async def start_service_manager():
+    app.service_manager = ServiceManager(app.yapapi_executor_config)
 
 
 @app.after_serving
@@ -110,7 +68,7 @@ async def create_instance():
         return "'params' should be an object", 400
 
     #   Initialize erigon
-    erigon = app.service_manager.create_service(ERIGON_CLS, [init_params], ErigonServiceWrapper)
+    erigon = app.service_manager.create_service(Erigon, [init_params], ErigonServiceWrapper)
     erigon.name = request_data.get('name', f'erigon_{erigon.id}')
 
     #   Save the data
@@ -140,10 +98,3 @@ async def stop_instance(erigon_id):
 @app.errorhandler(UserDataMissing)
 def handle_bad_request(e):
     return {'msg': str(e)}, 400
-
-
-if __name__ == '__main__':
-    #   TODO: we haven't decided yet how we'll be serving the app
-    #         (e.g. is it possible to use more than one gunicorn woker?)
-    #         so it runs just this way as a prototype
-    app.run(host='0.0.0.0')
