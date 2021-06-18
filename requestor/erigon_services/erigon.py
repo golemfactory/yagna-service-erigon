@@ -26,8 +26,8 @@ class Erigon(Service):
         return ErigonPayload()
 
     async def start(self):
+        #   startup - set start args (network parameter)
         self._ctx.deploy()
-
         start_args = await self._get_start_args()
         if start_args:
             erigon_init_args = start_args[0]
@@ -36,17 +36,11 @@ class Erigon(Service):
         else:
             self._ctx.start()
 
-        yield self._ctx.commit()
-
-    async def run(self):
         #   Set url & auth
         self._ctx.run('STATUS')
         processing_future = yield self._ctx.commit()
         result = self._parse_status_result(processing_future.result())
         self.url, self.auth, self.network = result['url'], result['auth'], result['network']
-
-        #   Wait forever, because Service is stopped when run ends
-        await asyncio.Future()
 
     def _parse_status_result(self, raw_data: 'List[CommandExecuted]'):
         #   NOTE: raw_data contains also output from "start" and "deploy" for the first
