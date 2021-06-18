@@ -1,7 +1,4 @@
---extra-index-url https://test.pypi.org/simple/
-
 Quart==0.15.1
 quart-cors==0.5.0
 
-#   TODO - wait for yapapi release
-yapapi~=0.6.0a
+git+https://github.com/golemfactory/yapapi-service-manager.git@pnowosie/allow-pip-installation-from-github-test
