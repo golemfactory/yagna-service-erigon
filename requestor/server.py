@@ -30,28 +30,18 @@ class ErigonServiceWrapper(ServiceWrapper):
             self._stopped_at = datetime.utcnow()
 
     def api_repr(self):
-        if self.stopped:
-            status = 'stopped'
-        elif not self.started:
-            status = 'pending'
-        else:
-            if self.service.url is None:
-                status = 'starting'
-            else:
-                status = 'running'
-
         data = {
             'id': self.id,
-            'status': status,
+            'status': self.status,
             'name': self.name,
             'init_params': self.start_args[0],
             'created_at': self._created_at.isoformat(),
         }
-        if status == 'running':
+        if self.status == 'running':
             data['url'] = self.service.url
             data['auth'] = self.service.auth
             data['network'] = self.service.network
-        elif status == 'stopped':
+        elif self.stopped:
             data['stopped_at'] = self._stopped_at.isoformat()
 
         return data

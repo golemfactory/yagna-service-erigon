@@ -9,24 +9,6 @@ EXECUTOR_CFG = {
 }
 
 
-def state(service_wrapper):
-    if service_wrapper.stopped:
-        status = 'stopped'
-    elif not service_wrapper.started:
-        status = 'pending'
-    else:
-        #   NOTE: this is erigon-specific thing, we don't use state of instance
-        #   beacues from our POV it is "running" when we know the url
-        if service_wrapper.service.url is None:
-            status = 'starting'
-        else:
-            status = 'running'
-
-    if status == 'running':
-        return f'running on {service_wrapper.service.network}'
-    return status
-
-
 async def main(service_manager):
     service_cnt = 1
     service_cls = erigon_services.Erigon
@@ -39,7 +21,7 @@ async def main(service_manager):
 
     while True:
         for service in services:
-            print(f"{service} state: {state(service)}")
+            print(f"{service} is {service.status}")
         await asyncio.sleep(1)
 
 if __name__ == '__main__':

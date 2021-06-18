@@ -69,7 +69,8 @@ def test_api(network):
     status, data = run_request('GET', 'getInstances')
     assert status == 200
     data = data[-1]
-    assert (data['status'], data['id'], data['init_params'], data['name']) == \
-           ('stopped', erigon_id, init_params, ERIGON_NAME)
+    assert (data['id'], data['init_params'], data['name']) == \
+           (erigon_id, init_params, ERIGON_NAME)
+    assert data['status'] in ('stopping', 'stopped')  # almost always this is stopping, but stopped could be possible?
     assert 'created_at' in data
     assert 'stopped_at' in data

@@ -95,4 +95,4 @@ async def test_api():
     async with httpx.AsyncClient() as client:
         for user_id in user_ids:
             erigon = await get_any_erigon(client, user_id)
-            assert erigon['status'] == 'stopped'
+            assert erigon['status'] in ('stopped', 'stopping')
