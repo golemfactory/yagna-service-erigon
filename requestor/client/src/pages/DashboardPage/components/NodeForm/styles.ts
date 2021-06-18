@@ -9,7 +9,7 @@ export const StyledForm = styled.form`
   box-shadow: 0 0.2rem 0.6rem 0 ${addOpacityToColor(color.black, 10)};
   border-radius: 1.4rem;
 
-  margin-bottom: 4rem;
+  margin: 18rem 0 4rem;
   padding: 6rem 4rem 0;
 `;
 
@@ -24,7 +24,13 @@ export const StyledCol = styled(Col)<{ fieldset?: boolean }>`
   }
 
   button {
-    margin-top: 11rem;
+    :first-of-type {
+      margin-top: 8rem;
+    }
+
+    :last-of-type {
+      margin-top: 2rem;
+    }
   }
 `;
 
