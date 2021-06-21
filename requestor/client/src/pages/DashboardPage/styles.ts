@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import zIndex from 'styles/zIndexes';
 import Button from 'components/Button';
 import errorImg from 'assets/images/error.svg';
 
@@ -17,13 +18,16 @@ export const StyledPlaceholder = styled.div`
   padding-top: 27rem;
 `;
 
+export const StyledButton = styled(Button)`
+  position: absolute;
+
+  top: 4rem;
+  right: 8.4rem;
+  z-index: ${zIndex.Toggle};
+`;
+
 export const StyledParagraph = styled.p`
   font-size: 1.6rem;
   line-height: 2.4rem;
-
-  margin: 0 0 3rem;
-`;
-
-export const StyledButton = styled(Button)`
-  margin: 6rem 0 4rem !important;
+  text-align: center;
 `;

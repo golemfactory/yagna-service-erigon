@@ -1,7 +1,7 @@
 import styled, { css } from 'styled-components';
 import color from 'styles/colors';
 
-export const StyledButton = styled.button<{ outlined?: boolean }>`
+export const StyledButton = styled.button<{ outlined?: boolean; ghost?: boolean }>`
   width: 29.5rem;
   height: 5rem;
 
@@ -17,11 +17,36 @@ export const StyledButton = styled.button<{ outlined?: boolean }>`
 
   margin: 0;
 
+  :hover {
+    color: ${color.petrol};
+
+    background-color: ${color.white};
+  }
+
   ${({ outlined }) =>
     outlined &&
     css`
       color: ${color.petrol};
 
       background-color: ${color.white};
+
+      :hover {
+        color: ${color.white};
+
+        background-color: ${color.petrol};
+      }
+    `}
+
+  ${({ ghost }) =>
+    ghost &&
+    css`
+      color: ${color.petrol};
+
+      background-color: ${color.white};
+      border-color: transparent;
+
+      :hover {
+        border-color: ${color.petrol};
+      }
     `}
 `;

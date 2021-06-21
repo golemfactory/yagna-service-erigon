@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { Row } from 'react-grid-system';
 import { upperFirst } from 'lodash';
@@ -15,7 +16,7 @@ const networks = [
   { id: 'rinkeby', name: network.name },
 ];
 
-const NodeForm = ({ onSubmit }: { onSubmit: (data: NodeFormData) => void }) => {
+const NodeForm = ({ children, onSubmit }: { children: ReactNode; onSubmit: (data: NodeFormData) => void }) => {
   const defaultValues = { name: '', network: networks[2].id };
 
   const {
@@ -58,6 +59,7 @@ const NodeForm = ({ onSubmit }: { onSubmit: (data: NodeFormData) => void }) => {
         </StyledCol>
         <StyledCol xs={4}>
           <Button type="submit" label="Start node" />
+          {children}
         </StyledCol>
       </Row>
     </StyledForm>

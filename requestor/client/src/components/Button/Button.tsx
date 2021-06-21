@@ -1,8 +1,8 @@
 import { ButtonProps } from './types';
 import { StyledButton } from './styles';
 
-const Button = ({ type = 'button', label, onClick, outlined, ...props }: ButtonProps) => (
-  <StyledButton type={type} onClick={onClick} outlined={outlined} {...props}>
+const Button = ({ type = 'button', label, ...props }: ButtonProps) => (
+  <StyledButton type={type} {...props}>
     {label}
   </StyledButton>
 );

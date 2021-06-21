@@ -1,16 +1,26 @@
 import { ReactNode } from 'react';
-import { Col, Row } from 'react-grid-system';
+import { Row } from 'react-grid-system';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { upperFirst } from 'lodash';
 import { NodeProps } from './types';
 import { status } from './statuses';
 import { HyperLink, notify, Toast } from 'components';
 import { useToggle } from 'hooks/useToggle';
+import { renderDate } from 'utils/presenters';
 import eyeClosed from 'assets/icons/eye-closed.svg';
 import eyeOpen from 'assets/icons/eye-open.svg';
-import { StyledCol, StyledCopy, StyledName, StyledNetwork, StyledNode, StyledStatus, StyledPassword } from './styles';
+import {
+  StyledCol,
+  StyledCopy,
+  StyledName,
+  StyledNetwork,
+  StyledNode,
+  StyledPassword,
+  StyledSpan,
+  StyledStatus,
+} from './styles';
 
-const Node = ({ node, children }: { node: NodeProps; children: ReactNode }) => {
+const Node = ({ node, children }: { node: NodeProps; children?: ReactNode }) => {
   const handleCopy = () => notify(<Toast message="Copied!" />, 'success');
 
   const password = useToggle({});
@@ -33,53 +43,67 @@ const Node = ({ node, children }: { node: NodeProps; children: ReactNode }) => {
       </Row>
       <Row>
         <StyledCol xs={4}>
-          {node.url && (
-            <>
-              <div>
-                Address
-                <CopyToClipboard text={node.url} onCopy={handleCopy}>
-                  <StyledCopy>Copy</StyledCopy>
-                </CopyToClipboard>
-              </div>
-              <HyperLink href={node.url} label={node.url} />
-            </>
-          )}
-        </StyledCol>
-        <Col xs={4} offset={{ xs: 4 }}>
-          {node.status !== status.stopped && children}
-        </Col>
-      </Row>
-      <Row>
-        <StyledCol xs={4}>
-          {node.auth && (
-            <>
-              <div>
-                Login
-                <CopyToClipboard text={node.auth.user} onCopy={handleCopy}>
-                  <StyledCopy>Copy</StyledCopy>
-                </CopyToClipboard>
-              </div>
-              {node.auth.user}
-            </>
-          )}
+          <div>Date created</div>
+          <StyledSpan>{renderDate(node.created_at)}</StyledSpan>
         </StyledCol>
         <StyledCol xs={4}>
-          {node.auth && (
-            <>
-              <div>
-                Password
-                <CopyToClipboard text={node.auth.password} onCopy={handleCopy}>
-                  <StyledCopy>Copy</StyledCopy>
-                </CopyToClipboard>
-              </div>
-              <StyledPassword>
-                {password.toggleOpen ? node.auth.password : '*'.repeat(node.auth.password.length)}
-                <img src={password.toggleOpen ? eyeClosed : eyeOpen} alt="toggle icon" onClick={password.toggleClick} />
-              </StyledPassword>
-            </>
-          )}
+          <div>Date stopped</div>
+          <StyledSpan>{renderDate(node.stopped_at)}</StyledSpan>
+        </StyledCol>
+        <StyledCol xs={4} offset={{ xs: 0 }}>
+          {![status.stopping, status.stopped].includes(node.status) && children}
         </StyledCol>
       </Row>
+      {node.status !== status.stopped && (
+        <Row>
+          <StyledCol xs={4}>
+            {node.url && (
+              <>
+                <div>
+                  Address
+                  <CopyToClipboard text={node.url} onCopy={handleCopy}>
+                    <StyledCopy>Copy</StyledCopy>
+                  </CopyToClipboard>
+                </div>
+                <HyperLink href={node.url} label={node.url} />
+              </>
+            )}
+          </StyledCol>
+          <StyledCol xs={4}>
+            {node.auth && (
+              <>
+                <div>
+                  Login
+                  <CopyToClipboard text={node.auth.user} onCopy={handleCopy}>
+                    <StyledCopy>Copy</StyledCopy>
+                  </CopyToClipboard>
+                </div>
+                {node.auth.user}
+              </>
+            )}
+          </StyledCol>
+          <StyledCol xs={4}>
+            {node.auth && (
+              <>
+                <div>
+                  Password
+                  <CopyToClipboard text={node.auth.password} onCopy={handleCopy}>
+                    <StyledCopy>Copy</StyledCopy>
+                  </CopyToClipboard>
+                </div>
+                <StyledPassword>
+                  {password.toggleOpen ? node.auth.password : '*'.repeat(node.auth.password.length)}
+                  <img
+                    src={password.toggleOpen ? eyeClosed : eyeOpen}
+                    alt="toggle icon"
+                    onClick={password.toggleClick}
+                  />
+                </StyledPassword>
+              </>
+            )}
+          </StyledCol>
+        </Row>
+      )}
     </StyledNode>
   );
 };
