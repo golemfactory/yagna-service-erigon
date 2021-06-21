@@ -4,6 +4,8 @@ from yapapi_service_manager import ServiceManager
 from collections import defaultdict
 import json
 
+from web3 import Web3
+
 from .erigon_service import Erigon
 from .erigon_service_wrapper import ErigonServiceWrapper
 
@@ -39,8 +41,8 @@ def get_user_id():
     else:
         raise UserDataMissing('Authorization header should start with "Bearer "')
 
-    if len(token) != 42:
-        raise UserDataMissing('Token is expected to be exactly 42 characters long')
+    if not Web3.isAddress(token):
+        raise UserDataMissing(f'{token} is not a correct address')
 
     return token
 
