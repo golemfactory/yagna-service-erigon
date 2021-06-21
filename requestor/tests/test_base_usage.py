@@ -7,7 +7,7 @@ BASE_URL = os.environ.get('BASE_URL')
 if BASE_URL and '://' not in BASE_URL:
     BASE_URL = 'http://' + BASE_URL
 
-USER_ID = 10 ** 41
+USER_ID = '0xaadD45B272b9665FA20DE28ea73f3ead6DB5f619'
 ERIGON_NAME = 'test_erigon'
 
 
@@ -24,7 +24,7 @@ def erigon_call_status(url, user, password):
 
 
 @pytest.mark.skipif(not BASE_URL, reason="BASE_URL is required")
-@pytest.mark.parametrize('network', ('kovan', 'rinkeby', 'ropsten', 'goerli'))
+@pytest.mark.parametrize('network', ('rinkeby', 'ropsten', 'goerli'))
 def test_api(network):
     #   1.  Create the instance
     init_params = {'network': network}
@@ -69,7 +69,8 @@ def test_api(network):
     status, data = run_request('GET', 'getInstances')
     assert status == 200
     data = data[-1]
-    assert (data['status'], data['id'], data['init_params'], data['name']) == \
-           ('stopped', erigon_id, init_params, ERIGON_NAME)
+    assert (data['id'], data['init_params'], data['name']) == \
+           (erigon_id, init_params, ERIGON_NAME)
+    assert data['status'] in ('stopping', 'stopped')  # almost always this is stopping, but stopped could be possible?
     assert 'created_at' in data
     assert 'stopped_at' in data

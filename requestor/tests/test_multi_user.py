@@ -51,7 +51,11 @@ async def get_any_erigon(client, user_id):
 @pytest.mark.skipif(not BASE_URL, reason="BASE_URL is required")
 @pytest.mark.skipif(PROVIDER_CNT < 3, reason="Not enough providers")
 async def test_api():
-    user_ids = list(range(10**41, 10**41 + 3))
+    user_ids = [
+        '0xaa92E58aeaa839f357b27D6e07Bc7866eb5E6983',
+        '0xaaCEf259A1d387Fb790587f8998f0AC6285E71A8',
+        '0xaa3F999EEc9F9302Ad8375C23cA15aa9659C40AA',
+    ]
 
     #   1.  Send many requests at the same time
     async with httpx.AsyncClient() as client:
@@ -95,4 +99,4 @@ async def test_api():
     async with httpx.AsyncClient() as client:
         for user_id in user_ids:
             erigon = await get_any_erigon(client, user_id)
-            assert erigon['status'] == 'stopped'
+            assert erigon['status'] in ('stopped', 'stopping')

@@ -22,4 +22,4 @@ sleep 5
 export YAGNA_APPKEY=$(yagna app-key list | tail -2 | head -1 | head -c53 | tail -c32)
 
 #   4.  Start server (TODO: gunicorn run)
-python3 server.py
+python3 run_server.py
