@@ -1,4 +1,4 @@
-from quart import Quart, request
+from quart import Quart, request, abort, jsonify
 from quart_cors import cors
 from yapapi_service_manager import ServiceManager
 from collections import defaultdict
@@ -16,10 +16,6 @@ cors(app)
 app.user_erigons = defaultdict(dict)
 
 
-class UserDataMissing(Exception):
-    pass
-
-
 @app.before_serving
 async def start_service_manager():
     app.service_manager = ServiceManager(app.yapapi_executor_config)
@@ -30,19 +26,26 @@ async def close_service_manager():
     await app.service_manager.close()
 
 
+def abort_json_400(msg):
+    data = {'msg': msg}
+    response = jsonify(data)
+    response.status_code = 400
+    abort(response)
+
+
 def get_user_id():
     try:
         auth = request.headers['Authorization']
     except KeyError:
-        raise UserDataMissing('Missing authorization header')
+        abort_json_400('Missing authorization header')
 
     if auth.startswith("Bearer "):
         token = auth[7:]
     else:
-        raise UserDataMissing('Authorization header should start with "Bearer "')
+        abort_json_400('Authorization header should start with "Bearer "')
 
     if not Web3.isAddress(token):
-        raise UserDataMissing(f'{token} is not a correct address')
+        abort_json_400(f'{token} is not a correct address')
 
     return token
 
@@ -95,8 +98,3 @@ async def stop_instance(erigon_id):
     erigon.stop()
 
     return erigon.api_repr(), 200
-
-
-@app.errorhandler(UserDataMissing)
-def handle_bad_request(e):
-    return {'msg': str(e)}, 400
