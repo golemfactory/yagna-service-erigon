@@ -1,6 +1,6 @@
 import asyncio
 
-from service_manager import ServiceManager
+from yapapi_service_manager import ServiceManager
 from server.erigon_service import Erigon
 
 EXECUTOR_CFG = {

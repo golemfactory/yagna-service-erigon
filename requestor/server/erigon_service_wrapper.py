@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from service_manager import ServiceWrapper
+from yapapi_service_manager import ServiceWrapper
 
 
 class ErigonServiceWrapper(ServiceWrapper):

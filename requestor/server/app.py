@@ -1,6 +1,6 @@
 from quart import Quart, request
 from quart_cors import cors
-from service_manager import ServiceManager
+from yapapi_service_manager import ServiceManager
 from collections import defaultdict
 import json
 
