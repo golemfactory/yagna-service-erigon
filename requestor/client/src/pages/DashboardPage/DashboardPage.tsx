@@ -79,33 +79,33 @@ const DashboardPage = () => {
           <Button label="Cancel" onClick={nodeForm.toggleClick} ghost />
         </NodeForm>
       ) : !!active.length || !!stopped.length ? (
-        <>
-          <StyledButton label="Run new node" onClick={nodeForm.toggleClick} outlined />
-          <Tabs count={{ active: active.length, stopped: stopped.length }}>
-            <TabPanel>
-              {!!active.length ? (
-                active.map((node: NodeProps) => (
-                  <Node key={node.id} node={node}>
-                    <Button label="Stop node" onClick={() => handleStopNode(node.id)} />
-                  </Node>
-                ))
-              ) : (
-                <StyledParagraph style={{ margin: '8rem 0' }}>
-                  Ooops! It looks like you don't have any node currently running
-                </StyledParagraph>
-              )}
-            </TabPanel>
-            <TabPanel>
-              {!!stopped.length ? (
-                stopped.map((node: NodeProps) => <Node key={node.id} node={node} />)
-              ) : (
-                <StyledParagraph style={{ margin: '8rem 0' }}>
-                  Ooops! It looks like you don't have any node stopped
-                </StyledParagraph>
-              )}
-            </TabPanel>
-          </Tabs>
-        </>
+        <Tabs
+          count={{ active: active.length, stopped: stopped.length }}
+          button={<StyledButton label="Run new node" onClick={nodeForm.toggleClick} outlined />}
+        >
+          <TabPanel>
+            {!!active.length ? (
+              active.map((node: NodeProps) => (
+                <Node key={node.id} node={node}>
+                  <Button label="Stop node" onClick={() => handleStopNode(node.id)} />
+                </Node>
+              ))
+            ) : (
+              <StyledParagraph style={{ margin: '8rem 0' }}>
+                Ooops! It looks like you don't have any node currently running
+              </StyledParagraph>
+            )}
+          </TabPanel>
+          <TabPanel>
+            {!!stopped.length ? (
+              stopped.map((node: NodeProps) => <Node key={node.id} node={node} />)
+            ) : (
+              <StyledParagraph style={{ margin: '8rem 0' }}>
+                Ooops! It looks like you don't have any node stopped
+              </StyledParagraph>
+            )}
+          </TabPanel>
+        </Tabs>
       ) : (
         <StyledPlaceholder>
           <StyledParagraph style={{ margin: '0 0 3rem' }}>

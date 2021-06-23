@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { Tabs } from 'react-tabs';
 import color from 'styles/colors';
+import zIndex from 'styles/zIndexes';
 
 export const StyledTabs = styled(Tabs)`
   .react-tabs {
@@ -8,11 +9,20 @@ export const StyledTabs = styled(Tabs)`
   }
 
   .react-tabs__tab-list {
+    height: 14rem;
+
+    position: sticky;
+    top: 12rem;
+    z-index: ${zIndex.Toggle};
+
+    background-color: ${color.white};
     border: 0.1rem solid transparent;
     border-bottom-color: ${color.petrol};
 
-    margin: 9rem 0 4rem;
+    margin: 0;
+    margin-bottom: 4rem;
     padding: 0;
+    padding-top: 9rem;
   }
 
   .react-tabs__tab {
