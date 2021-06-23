@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { Row } from 'react-grid-system';
+import { adjectives, animals, uniqueNamesGenerator } from 'unique-names-generator';
 import { upperFirst } from 'lodash';
 import { NodeFormData } from './types';
 import { network, node } from './values';
@@ -17,7 +18,14 @@ const networks = [
 ];
 
 const NodeForm = ({ children, onSubmit }: { children: ReactNode; onSubmit: (data: NodeFormData) => void }) => {
-  const defaultValues = { name: '', network: networks[2].id };
+  const randomName = uniqueNamesGenerator({
+    dictionaries: [adjectives, animals],
+    length: 2,
+    separator: ' ',
+    style: 'capital',
+  });
+
+  const defaultValues = { name: randomName, network: networks[2].id };
 
   const {
     register,
