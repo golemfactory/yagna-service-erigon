@@ -232,7 +232,7 @@ cat >"${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-erigon.json" <<EOF
   }
 ]
 EOF
-curl -sSfL https://github.com/golemfactory/yagna-service-erigon/releases/download/8e2015f/ya-runtime-erigon.tar.gz \
+curl -sSfL https://github.com/golemfactory/yagna-service-erigon/releases/download/ya-runtime-erigon-v0.1.0/ya-runtime-erigon-v0.1.0.tar.gz \
     | tar -xzf - -C "${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-erigon" \
     || die "failed to install erigon runtime"
 
@@ -256,7 +256,7 @@ chown -R "${ERIGON_USER}:${ERIGON_USER}" \
 
 # install yagna
 curl -sSf https://join.golem.network/as-provider \
-    | sudo -i -u "$ERIGON_USER" -- env YA_INSTALLER_CORE=pre-rel-v0.7.0-rc8 bash -
+    | sudo -i -u "$ERIGON_USER" -- env YA_INSTALLER_CORE=pre-rel-v0.7.1-rc1 bash -
 # for some reason even on success installer exits with code 1
 
 sudo -i -u "$ERIGON_USER" ya-provider preset deactivate wasmtime
