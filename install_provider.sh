@@ -29,20 +29,9 @@ apt-get update
 
 # ========= user =========
 
-# create kvm group if not exists
-if ! getent group kvm >/dev/null 2>/dev/null; then
-    # on ubuntu <= 18.04 this package setups kvm group and access to /dev/kvm
-    apt-get install -y qemu-system-common
-fi
-
 # create user if not exists
 if ! id -u "$ERIGON_USER" >/dev/null 2>/dev/null; then
-    useradd -m -s /bin/bash -G kvm -U "$ERIGON_USER" || die "failed to create user"
-fi
-
-# add user to kvm group if doesn't already belong
-if ! id -nGz "$ERIGON_USER" | grep -qzxF kvm; then
-    adduser "$ERIGON_USER" kvm
+    useradd -m -s /bin/bash -U "$ERIGON_USER" || die "failed to create user"
 fi
 
 # because someone might use already existing user with HOME set to /var/lib/${ERIGON_USER}
@@ -247,7 +236,6 @@ curl -sSfL https://github.com/golemfactory/yagna-service-erigon/releases/downloa
     | tar -xzf - -C "${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-erigon" \
     || die "failed to install erigon runtime"
 
-mkdir -p "${ERIGON_DATADIR}/goerli"
 mkdir -p "${ERIGON_USER_HOME}/.local/share/ya-runtime-erigon"
 
 cat >"${ERIGON_USER_HOME}/.local/share/ya-runtime-erigon/ya-runtime-erigon.json" <<EOF
@@ -273,6 +261,8 @@ curl -sSf https://join.golem.network/as-provider \
 
 sudo -i -u "$ERIGON_USER" ya-provider preset deactivate wasmtime
 sudo -i -u "$ERIGON_USER" ya-provider preset deactivate vm
+sudo rm "${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-vm.json"
+sudo rm "${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-wasi.json"
 
 # install systemd service
 cat >/etc/systemd/system/golem.service <<EOF
@@ -293,3 +283,4 @@ EOF
 
 systemctl daemon-reload
 systemctl enable --now golem.service
+
