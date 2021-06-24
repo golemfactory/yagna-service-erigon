@@ -45,10 +45,10 @@ apt-get install -y acl nginx certbot apache2-utils || die "failed to install dep
 # stop nginx to leave port 80 for certbot standalone
 systemctl stop nginx
 
-[[ -f /etc/nginx/dhparam.pem ]] || \
-    openssl dhparam -out /etc/nginx/dhparam.pem 2048
-
 if [[ "$ERIGON_USE_SSL" == y && ! -f /etc/letsencrypt/live/$ERIGON_HOSTNAME/fullchain.pem ]]; then
+    [[ -f /etc/nginx/dhparam.pem ]] || \
+        openssl dhparam -out /etc/nginx/dhparam.pem 2048
+
     if [[ -z "$ERIGON_EMAIL" ]]; then
         read -r -p "email (for certbot): " ERIGON_EMAIL
     fi
@@ -140,7 +140,7 @@ http {
     ssl_session_tickets    off;
 
     # Diffie-Hellman parameter for DHE ciphersuites
-    ssl_dhparam            /etc/nginx/dhparam.pem;
+    ${ERIGON_USE_SSL:+ssl_dhparam            /etc/nginx/dhparam.pem;}
 
     # Mozilla Intermediate configuration
     ssl_protocols          TLSv1.2 TLSv1.3;
