@@ -6,11 +6,13 @@ import { status } from '../Node/statuses';
 import copy from 'assets/icons/copy.svg';
 
 export const StyledNode = styled.div`
+  width: calc(100% - 1.4rem);
+
   border: 0.1rem solid ${color.ash};
   box-shadow: 0 0.2rem 0.6rem 0 ${addOpacityToColor(color.black, 10)};
   border-radius: 1.4rem;
 
-  margin-bottom: 4rem;
+  margin: 0 auto 4rem;
   padding: 6rem 4rem 0;
 `;
 

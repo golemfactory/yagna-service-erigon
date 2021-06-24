@@ -6,6 +6,7 @@ export type TabsProps = {
     active: number;
     stopped: number;
   };
+  button: ReactNode;
 };
 
 export type TabProps = {

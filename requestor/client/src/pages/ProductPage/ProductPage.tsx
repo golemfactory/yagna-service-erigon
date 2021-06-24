@@ -7,10 +7,10 @@ const ProductPage = ({ onNotify }: { onNotify: () => void }) => (
   <Layout>
     <Row>
       <Col xs={6}>
-        <StyledHeading>Catchy and cool phrase</StyledHeading>
+        <StyledHeading>Run ethereum nodes in seconds</StyledHeading>
         <StyledParagraph>
-          The Golem Network fosters a global group of creators building ambitious software solutions that will shape the
-          technological landscape of future generations by accessing computing resources across the platform.
+          Erigolem is one of the fastest ways to integrate into the ethereum network. Select the type of network, click
+          "start" and enjoy access to the most popular blockchain network in the world. Done.
         </StyledParagraph>
         <Button label="Start new node" onClick={onNotify} />
       </Col>

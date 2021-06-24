@@ -1,5 +1,4 @@
 import React from 'react';
-import { Col, Row } from 'react-grid-system';
 import { Tab, TabList, TabPanel } from 'react-tabs';
 import { TabProps, TabsProps } from './types';
 import { StyledTabs } from './styles';
@@ -9,19 +8,16 @@ const tabs = [
   { id: 1, name: 'Stopped' },
 ];
 
-const Tabs = ({ children, count }: TabsProps) => (
+const Tabs = ({ children, count, button }: TabsProps) => (
   <StyledTabs defaultIndex={0}>
-    <Row nogutter>
-      <Col xs={12}>
-        <TabList>
-          {tabs.map((tab: TabProps) => (
-            <Tab key={tab.id}>
-              {tab.name} ({tab.name === tabs[0].name ? count.active : count.stopped})
-            </Tab>
-          ))}
-        </TabList>
-      </Col>
-    </Row>
+    <TabList>
+      {button}
+      {tabs.map((tab: TabProps) => (
+        <Tab key={tab.id}>
+          {tab.name} ({tab.name === tabs[0].name ? count.active : count.stopped})
+        </Tab>
+      ))}
+    </TabList>
     {children}
   </StyledTabs>
 );
