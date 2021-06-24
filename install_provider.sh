@@ -29,20 +29,9 @@ apt-get update
 
 # ========= user =========
 
-# create kvm group if not exists
-if ! getent group kvm >/dev/null 2>/dev/null; then
-    # on ubuntu <= 18.04 this package setups kvm group and access to /dev/kvm
-    apt-get install -y qemu-system-common
-fi
-
 # create user if not exists
 if ! id -u "$ERIGON_USER" >/dev/null 2>/dev/null; then
-    useradd -m -s /bin/bash -G kvm -U "$ERIGON_USER" || die "failed to create user"
-fi
-
-# add user to kvm group if doesn't already belong
-if ! id -nGz "$ERIGON_USER" | grep -qzxF kvm; then
-    adduser "$ERIGON_USER" kvm
+    useradd -m -s /bin/bash -U "$ERIGON_USER" || die "failed to create user"
 fi
 
 # because someone might use already existing user with HOME set to /var/lib/${ERIGON_USER}
@@ -56,10 +45,10 @@ apt-get install -y acl nginx certbot apache2-utils || die "failed to install dep
 # stop nginx to leave port 80 for certbot standalone
 systemctl stop nginx
 
-[[ -f /etc/nginx/dhparam.pem ]] || \
-    openssl dhparam -out /etc/nginx/dhparam.pem 2048
-
 if [[ "$ERIGON_USE_SSL" == y && ! -f /etc/letsencrypt/live/$ERIGON_HOSTNAME/fullchain.pem ]]; then
+    [[ -f /etc/nginx/dhparam.pem ]] || \
+        openssl dhparam -out /etc/nginx/dhparam.pem 2048
+
     if [[ -z "$ERIGON_EMAIL" ]]; then
         read -r -p "email (for certbot): " ERIGON_EMAIL
     fi
@@ -151,7 +140,7 @@ http {
     ssl_session_tickets    off;
 
     # Diffie-Hellman parameter for DHE ciphersuites
-    ssl_dhparam            /etc/nginx/dhparam.pem;
+    ${ERIGON_USE_SSL:+ssl_dhparam            /etc/nginx/dhparam.pem;}
 
     # Mozilla Intermediate configuration
     ssl_protocols          TLSv1.2 TLSv1.3;
@@ -243,11 +232,10 @@ cat >"${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-erigon.json" <<EOF
   }
 ]
 EOF
-curl -sSfL https://github.com/golemfactory/yagna-service-erigon/releases/download/8e2015f/ya-runtime-erigon.tar.gz \
+curl -sSfL https://github.com/golemfactory/yagna-service-erigon/releases/download/ya-runtime-erigon-v0.1.0/ya-runtime-erigon-v0.1.0.tar.gz \
     | tar -xzf - -C "${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-erigon" \
     || die "failed to install erigon runtime"
 
-mkdir -p "${ERIGON_DATADIR}/goerli"
 mkdir -p "${ERIGON_USER_HOME}/.local/share/ya-runtime-erigon"
 
 cat >"${ERIGON_USER_HOME}/.local/share/ya-runtime-erigon/ya-runtime-erigon.json" <<EOF
@@ -268,11 +256,13 @@ chown -R "${ERIGON_USER}:${ERIGON_USER}" \
 
 # install yagna
 curl -sSf https://join.golem.network/as-provider \
-    | sudo -i -u "$ERIGON_USER" -- env YA_INSTALLER_CORE=pre-rel-v0.7.0-rc8 bash -
+    | sudo -i -u "$ERIGON_USER" -- env YA_INSTALLER_CORE=pre-rel-v0.7.1-rc1 bash -
 # for some reason even on success installer exits with code 1
 
 sudo -i -u "$ERIGON_USER" ya-provider preset deactivate wasmtime
 sudo -i -u "$ERIGON_USER" ya-provider preset deactivate vm
+sudo rm "${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-vm.json"
+sudo rm "${ERIGON_USER_HOME}/.local/lib/yagna/plugins/ya-runtime-wasi.json"
 
 # install systemd service
 cat >/etc/systemd/system/golem.service <<EOF
@@ -293,3 +283,4 @@ EOF
 
 systemctl daemon-reload
 systemctl enable --now golem.service
+
