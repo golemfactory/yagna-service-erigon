@@ -73,7 +73,7 @@ async def create_instance():
         return "'params' should be an object", 400
 
     #   Initialize erigon
-    erigon = app.service_manager.create_service(Erigon, [init_params], ErigonServiceWrapper)
+    erigon = app.service_manager.create_service(Erigon, (init_params,), ErigonServiceWrapper)
     erigon.name = request_data.get('name', f'erigon_{erigon.id}')
 
     #   Save the data
