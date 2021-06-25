@@ -53,7 +53,7 @@ def get_user_id():
 @app.route('/getInstances', methods=['GET'])
 async def get_instances():
     user_id = get_user_id()
-    erigons = list(app.user_erigons[user_id].values())
+    erigons = app.user_erigons[user_id].values()
     data = [erigon.api_repr() for erigon in erigons]
     return json.dumps(data), 200
 
