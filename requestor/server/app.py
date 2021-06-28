@@ -53,7 +53,7 @@ def get_user_id():
 @app.route('/getInstances', methods=['GET'])
 async def get_instances():
     user_id = get_user_id()
-    erigons = list(app.user_erigons[user_id].values())
+    erigons = app.user_erigons[user_id].values()
     data = [erigon.api_repr() for erigon in erigons]
     return json.dumps(data), 200
 
@@ -73,7 +73,7 @@ async def create_instance():
         return "'params' should be an object", 400
 
     #   Initialize erigon
-    erigon = app.service_manager.create_service(Erigon, [init_params], ErigonServiceWrapper)
+    erigon = app.service_manager.create_service(Erigon, (init_params,), ErigonServiceWrapper)
     erigon.name = request_data.get('name', f'erigon_{erigon.id}')
 
     #   Save the data
@@ -85,13 +85,9 @@ async def create_instance():
 @app.route('/stopInstance/<erigon_id>', methods=['POST'])
 async def stop_instance(erigon_id):
     user_id = get_user_id()
-    try:
-        this_user_erigons = app.user_erigons[user_id]
-    except KeyError:
-        return 'Invalid user_id', 403
 
     try:
-        erigon = this_user_erigons[erigon_id]
+        erigon = app.user_erigons[user_id][erigon_id]
     except KeyError:
         return 'Invalid erigon_id', 404
 
