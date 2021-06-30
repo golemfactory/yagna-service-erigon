@@ -1,19 +1,30 @@
+from collections import defaultdict
+import json
+from typing import TYPE_CHECKING
+
 from quart import Quart, request, abort, jsonify
 from quart_cors import cors
 from yapapi_service_manager import ServiceManager
-from collections import defaultdict
-import json
-
 from web3 import Web3
 
 from .erigon_service import Erigon
 from .erigon_service_wrapper import ErigonServiceWrapper
 
-app = Quart(__name__)
+if TYPE_CHECKING:
+    from typing import Optional, Mapping
+    from yapapi_service_manager import ServiceWrapper
+
+
+class App(Quart):
+    def __init__(self) -> None:
+        super().__init__(__name__)
+        self.user_erigons: 'Mapping[str, Mapping[str, ServiceWrapper]]' = defaultdict(dict)
+        self.service_manager: 'Optional[ServiceManager]' = None
+        self.yapapi_executor_config: 'Optional[dict]' = None
+
+
+app = App()
 cors(app)
-
-
-app.user_erigons = defaultdict(dict)
 
 
 @app.before_serving

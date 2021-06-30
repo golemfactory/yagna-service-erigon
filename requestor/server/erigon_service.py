@@ -47,7 +47,7 @@ class Erigon(Service):
         #         request, and only single row for subsequent requests -> that's why -1 not 0
         command_executed = raw_data[-1]
 
-        erigon_data = command_executed.stdout
+        erigon_data = command_executed.stdout or ''  # FIXME: Handle missing/invalid output
         erigon_data = json.loads(erigon_data)
         return erigon_data
 
