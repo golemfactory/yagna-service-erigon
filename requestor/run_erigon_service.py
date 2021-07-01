@@ -9,7 +9,7 @@ EXECUTOR_CFG = {
 }
 
 
-async def main(service_manager):
+async def run_service(service_manager):
     service_cnt = 1
     start_args = ({'network': 'rinkeby'},)
 
@@ -23,13 +23,18 @@ async def main(service_manager):
             print(f"{service} is {service.status}")
         await asyncio.sleep(1)
 
-if __name__ == '__main__':
+
+def main():
     service_manager = ServiceManager(EXECUTOR_CFG)
     try:
         loop = asyncio.get_event_loop()
-        main_task = loop.create_task(main(service_manager))
-        loop.run_until_complete(main_task)
+        task = loop.create_task(run_service(service_manager))
+        loop.run_until_complete(task)
     except KeyboardInterrupt:
         shutdown = loop.create_task(service_manager.close())
         loop.run_until_complete(shutdown)
-        main_task.cancel()
+        task.cancel()
+
+
+if __name__ == '__main__':
+    main()

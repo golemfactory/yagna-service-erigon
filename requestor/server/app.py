@@ -12,7 +12,7 @@ from .erigon_service_wrapper import ErigonServiceWrapper
 
 if TYPE_CHECKING:
     from typing import Optional, Mapping
-    from yapapi_service_manager import ServiceWrapper
+    from yapapi_service_manager import ServiceWrapper  # pylint: disable=C0412
 
 
 class App(Quart):
@@ -80,7 +80,7 @@ async def create_instance():
     except KeyError:
         return "'params' key is required", 400
 
-    if type(init_params) is not dict:
+    if not isinstance(init_params, dict):
         return "'params' should be an object", 400
 
     #   Initialize erigon

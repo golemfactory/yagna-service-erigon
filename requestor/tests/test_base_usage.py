@@ -1,7 +1,8 @@
-import pytest
 import os
-import requests
 from time import sleep
+
+import pytest
+import requests
 
 BASE_URL = os.environ.get('BASE_URL')
 if BASE_URL and '://' not in BASE_URL:
@@ -11,7 +12,7 @@ USER_ID = '0xaadD45B272b9665FA20DE28ea73f3ead6DB5f619'
 ERIGON_NAME = 'test_erigon'
 
 
-def run_request(method, endpoint, data={}):
+def run_request(method, endpoint, data=None):
     url = os.path.join(BASE_URL, endpoint)
     res = requests.request(method, url, json=data, headers={'Authorization': f'Bearer {USER_ID}'})
     return res.status_code, res.json()
@@ -36,7 +37,7 @@ def test_api(network):
     assert 'created_at' in data
 
     #   2.  Wait for the instance to run
-    for i in range(10):
+    for _ in range(10):
         status, data = run_request('GET', 'getInstances')
         data = data[-1]
         assert status == 200

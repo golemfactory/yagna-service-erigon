@@ -1,0 +1,13 @@
+[MASTER]
+init-hook='import sys; sys.path.append(".")'
+
+
+[MESSAGES CONTROL]
+
+disable=missing-docstring,
+        todo,
+        fixme
+
+[FORMAT]
+
+max-line-length=120
