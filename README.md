@@ -7,11 +7,11 @@ The purpose of this example is to demonstrate building a Golem service using a d
 
 The application consist of three major components:
 
-1. **User interface** (`requestor/client`)  
+1. **User interface** (`client/`)  
    A browser-based interface written in TypeScript using [React](https://reactjs.org/). It allows the end user to interact with the application, i.e. start an Erigon node after authenticating with their [Metamask](https://metamask.io/) wallet, and later manage their node(s).
-2. **Requestor server** (`requestor/server`)  
+2. **Requestor server** (`requestor/`)  
    A Python application developed using [Quart](https://pgjones.gitlab.io/quart/) and [yapapi-service-manager](https://github.com/golemfactory/yapapi-service-manager). It acts both as an HTTP server (handling requests from the user interface), and as a requestor agent (submitting tasks to the Golem network).
-3. **Erigon runtime** (`ya-runtime-erigon`)  
+3. **Erigon runtime** (`ya-runtime-erigon/`)  
     A dedicated, self-contained runtime created with [ya-runtime-sdk](https://github.com/golemfactory/ya-runtime-sdk). It is a Rust binary wrapping [Erigon](https://github.com/ledgerwatch/erigon) service itself so that it can be orchestrated by yagna daemon. The runtime also controls the access to the service by managing [Nginx](https://www.nginx.com/) configuration.
 
 Instructions how to run and test the requestor server are [here](https://github.com/golemfactory/yagna-service-erigon/blob/master/requestor/README.md).
