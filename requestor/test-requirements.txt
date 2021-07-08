@@ -1,0 +1,4 @@
+httpx==0.18.2
+mypy==0.*
+pylint==2.*
+pytest==6.*
