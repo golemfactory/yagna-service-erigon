@@ -1,11 +1,11 @@
-import json
 import asyncio
-
-from .erigon_payload import ErigonPayload
+import json
+from typing import TYPE_CHECKING
 
 from yapapi.services import Service
 
-from typing import TYPE_CHECKING
+from .erigon_payload import ErigonPayload
+
 if TYPE_CHECKING:
     from typing import List
     from yapapi.events import CommandExecuted
@@ -42,12 +42,13 @@ class Erigon(Service):
         result = self._parse_status_result(processing_future.result())
         self.url, self.auth, self.network = result['url'], result['auth'], result['network']
 
-    def _parse_status_result(self, raw_data: 'List[CommandExecuted]'):
+    @staticmethod
+    def _parse_status_result(raw_data: 'List[CommandExecuted]'):
         #   NOTE: raw_data contains also output from "start" and "deploy" for the first
         #         request, and only single row for subsequent requests -> that's why -1 not 0
         command_executed = raw_data[-1]
 
-        erigon_data = command_executed.stdout
+        erigon_data = command_executed.stdout or ''  # FIXME: Handle missing/invalid output
         erigon_data = json.loads(erigon_data)
         return erigon_data
 

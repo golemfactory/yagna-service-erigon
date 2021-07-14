@@ -1,7 +1,8 @@
-import httpx
-import pytest
 import os
 import asyncio
+
+import httpx
+import pytest
 
 BASE_URL = os.environ.get('BASE_URL')
 if BASE_URL and '://' not in BASE_URL:
@@ -10,7 +11,7 @@ if BASE_URL and '://' not in BASE_URL:
 PROVIDER_CNT = int(os.environ.get('PROVIDER_CNT', '1'))
 
 
-def create_request(method, endpoint, user_id, data={}):
+def create_request(method, endpoint, user_id, data=None):
     url = os.path.join(BASE_URL, endpoint)
     req = httpx.Request(method, url, json=data, headers={'Authorization': f'Bearer {user_id}'})
 
@@ -70,7 +71,7 @@ async def test_api():
     #   2.  Wait until everything started
     not_started_ids = user_ids.copy()
     async with httpx.AsyncClient() as client:
-        for i in range(0, 10):
+        for _ in range(0, 10):
             if not not_started_ids:
                 print("ALL STARTED")
                 break
