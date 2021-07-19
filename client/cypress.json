@@ -1,0 +1,10 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "projectId": "1w3oaq",
+  "viewportHeight": 1000,
+  "viewportWidth": 1280,
+  "component": {
+    "testFiles": "**/*.spec.{js,ts,jsx,tsx}",
+    "componentFolder": "src"
+  }
+}
