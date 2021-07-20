@@ -26,7 +26,7 @@ const Node = ({ node, children }: { node: NodeProps; children?: ReactNode }) => 
   const password = useToggle({});
 
   return (
-    <StyledNode>
+    <StyledNode role="node">
       <Row>
         <StyledCol xs={4}>
           <div>Node name</div>
