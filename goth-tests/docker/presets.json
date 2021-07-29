@@ -1,0 +1,17 @@
+{
+  "active": [
+    "erigon"
+  ],
+  "presets": [
+    {
+      "name": "erigon",
+      "exeunit-name": "erigon",
+      "pricing-model": "linear",
+      "usage-coeffs": {
+        "duration": 0.1,
+        "initial": 1.0,
+        "cpu": 1.0
+      }
+    }
+  ]
+}

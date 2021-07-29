@@ -1,0 +1,9 @@
+{
+  "public_addr": "http://erigon:8545",
+  "data_dir": "/data/erigon",
+  "passwd_tool_path": "htpasswd",
+  "passwd_file_path": "/etc/nginx/erigon_htpasswd",
+  "password_default_length": 15,
+  "erigon_http_addr": "127.0.0.1",
+  "erigon_http_port": "8555"
+}
