@@ -15,3 +15,5 @@ Cypress.Commands.add('notifyProceedMetamaskLogin', () => {
 Cypress.Commands.add('copyElement', (label) => cy.contains(label).contains('Copy').click());
 
 Cypress.Commands.add('getNode', (label) => cy.contains(label).parents('div[role=node]'));
+
+Cypress.Commands.add('getHref', () => cy.get('a').should('have.attr', 'href'));

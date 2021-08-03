@@ -80,7 +80,7 @@ const Node = ({ node, children }: { node: NodeProps; children?: ReactNode }) => 
                     <StyledCopy>Copy</StyledCopy>
                   </CopyToClipboard>
                 </div>
-                {node.auth.user}
+                <span data-user={node.auth.user}>{node.auth.user}</span>
               </>
             )}
           </StyledCol>
@@ -93,7 +93,7 @@ const Node = ({ node, children }: { node: NodeProps; children?: ReactNode }) => 
                     <StyledCopy>Copy</StyledCopy>
                   </CopyToClipboard>
                 </div>
-                <StyledPassword>
+                <StyledPassword data-password={node.auth.password}>
                   {password.toggleOpen ? node.auth.password : '*'.repeat(node.auth.password.length)}
                   <img
                     src={password.toggleOpen ? eyeClosed : eyeOpen}
