@@ -2,9 +2,6 @@ use futures::FutureExt;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::fs;
-use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use titlecase::titlecase;
 use tokio::process::{Child, Command};
@@ -40,6 +37,8 @@ pub enum Network {
 
 #[derive(Deserialize, Serialize)]
 pub struct ErigonConf {
+    erigon_http_addr: String,
+    erigon_http_port: String,
     public_addr: String,
     data_dir: String,
     passwd_tool_path: String,
@@ -52,6 +51,8 @@ pub struct ErigonConf {
 impl Default for ErigonConf {
     fn default() -> Self {
         ErigonConf {
+            erigon_http_addr: "127.0.0.1".to_string(),
+            erigon_http_port: "8555".to_string(),
             public_addr: "http://erigon.localhost:8545".to_string(),
             data_dir: "/data/erigon".to_string(),
             passwd_tool_path: "htpasswd".to_string(),
@@ -69,31 +70,10 @@ pub struct ErigonRuntime {
     erigon_pid: Option<Child>,
     rpcdaemon_pid: Option<Child>,
     erigon_password: Option<String>,
-    erigon_chain: Option<String>,
 }
 
 impl Runtime for ErigonRuntime {
-    fn deploy<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
-        let data_dir = PathBuf::from(&ctx.conf.data_dir);
-
-        // check if parent data directory exists
-        if !(data_dir.exists() && data_dir.is_dir()) {
-            panic!(
-                "Configuration 'data_dir' directory has to exists and needs to contain
-                 the directory for every supported network, named of the network"
-            );
-        }
-
-        // create all supported chains data subdirs
-        for chain_subdir in
-            Network::iter_variant_names().map(|chain| chain_subdir(data_dir.as_path(), chain))
-        {
-            if !&chain_subdir.is_dir() {
-                fs::create_dir(&chain_subdir)
-                    .unwrap_or_else(|_| panic!("Unable to create subdir {:?}", &chain_subdir));
-            }
-        }
-
+    fn deploy<'a>(&mut self, _ctx: &mut Context<Self>) -> OutputResponse<'a> {
         async move { Ok(None) }.boxed_local()
     }
 
@@ -121,55 +101,10 @@ impl Runtime for ErigonRuntime {
         .expect("Unable to create passwd file");
         self.erigon_password = Some(password);
 
-        // Spawn erigon processes
-        let parent_dir = PathBuf::from(&ctx.conf.data_dir);
-        let data_dir = chain_subdir(parent_dir.as_path(), &chain);
-        let mut erigon_pid = spawn_process(
-            &mut Command::new(&path.join(ERIGON_BIN))
-                .arg("--chain")
-                .arg(&chain),
-            &data_dir,
-            &[""; 0],
-        )
-        .expect("Erigon: Failed to spawn");
-
-        let rpcd_pid = spawn_process(
-            &mut Command::new(&path.join(RPCDAEMON_BIN))
-                .arg("--http.addr")
-                .arg(&ctx.conf.erigon_http_addr)
-                .arg("--http.port")
-                .arg(&ctx.conf.erigon_http_port),
-            &data_dir,
-            RPCDAEMON_PARAMS,
-        );
-        if !rpcd_pid.is_ok() {
-            let _ = (&mut erigon_pid).kill();
-        }
-        let rpcd_pid = rpcd_pid.expect("RPC Daemon: Failed to spawn");
-
-        self.erigon_pid = Some(erigon_pid);
-        self.rpcdaemon_pid = Some(rpcd_pid);
-
-        async move { Ok(Some(serialize::json::json!({ "network": chain }))) }.boxed_local()
+        async move { Ok(Some(serialize::json::json!({ "network": "mainnet" }))) }.boxed_local()
     }
 
     fn stop<'a>(&mut self, _: &mut Context<Self>) -> EmptyResponse<'a> {
-        let erigon_kill_ok = match &mut self.erigon_pid {
-            Some(erigon_pid) => erigon_pid.kill().is_ok(),
-            None => false,
-        };
-        let rpcd_kill_ok = match &mut self.rpcdaemon_pid {
-            Some(rpcdaemon_pid) => rpcdaemon_pid.kill().is_ok(),
-            None => false,
-        };
-
-        if !(erigon_kill_ok && rpcd_kill_ok) {
-            panic!(
-                "Unable to kill one of the processes. Erigon: {:?}, RpcDaemon: {:?}.",
-                erigon_kill_ok, rpcd_kill_ok
-            );
-        }
-
         async move { Ok(()) }.boxed_local()
     }
 
@@ -182,7 +117,6 @@ impl Runtime for ErigonRuntime {
         let erigon_status_data = serialize::json::json!(
             {
                 "url": &ctx.conf.public_addr,
-                "network": &self.erigon_chain,
                 "auth": {
                     "user": AUTH_ERIGON_USER,
                     "password": &self.erigon_password
@@ -201,19 +135,6 @@ impl Runtime for ErigonRuntime {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     ya_runtime_sdk::run::<ErigonRuntime>().await
-}
-
-fn spawn_process(cmd: &mut Command, datadir: &PathBuf, params: &[&str]) -> std::io::Result<Child> {
-    cmd.arg("--datadir")
-        .arg(datadir)
-        .args(params)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-}
-
-fn chain_subdir(parent_dir: &Path, chain: &str) -> PathBuf {
-    parent_dir.join(chain.to_lowercase())
 }
 
 fn generate_password_file(
