@@ -14,6 +14,10 @@ The application consist of three major components:
 3. **Erigon runtime** (`ya-runtime-erigon/`)  
     A dedicated, self-contained runtime created with [ya-runtime-sdk](https://github.com/golemfactory/ya-runtime-sdk). It is a Rust binary wrapping [Erigon](https://github.com/ledgerwatch/erigon) service itself so that it can be orchestrated by yagna daemon. The runtime also controls the access to the service by managing [Nginx](https://www.nginx.com/) configuration.
 
+---
+
+To use the application locally, run `docker-compose up` and open [http://localhost:8000]()
+
 Instructions how to run and test the requestor server are [here](https://github.com/golemfactory/yagna-service-erigon/blob/master/requestor/README.md).
 
 Full project documentation can be found in the [Golem handbook](https://handbook.golem.network/requestor-tutorials/service-development/service-example-2-managed-erigon).
