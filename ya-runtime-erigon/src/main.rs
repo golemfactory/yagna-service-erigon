@@ -2,6 +2,9 @@ use futures::FutureExt;
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
+use std::fs::OpenOptions;
+use std::io;
+use std::path::Path;
 use std::process::Stdio;
 use tokio::process::{Child, Command};
 use ya_runtime_sdk::*;
@@ -39,7 +42,11 @@ pub struct ErigonRuntime {
 }
 
 impl Runtime for ErigonRuntime {
-    fn deploy<'a>(&mut self, _ctx: &mut Context<Self>) -> OutputResponse<'a> {
+    fn deploy<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
+        let path = Path::new(&ctx.conf.passwd_file_path);
+        touch(&path)
+            .expect(&("Wrong path to passwd_file_path: ".to_owned() + path.to_str().unwrap()));
+
         async move { Ok(None) }.boxed_local()
     }
 
@@ -54,20 +61,27 @@ impl Runtime for ErigonRuntime {
             .take(ctx.conf.password_default_length)
             .collect();
 
-        let _ = generate_password_file(
+        let _ = add_user_to_pass_file(
             &ctx.conf.passwd_tool_path,
             &ctx.conf.passwd_file_path,
             &username,
             &password,
         )
-        .expect("Unable to create passwd file");
+        .expect("Unable to add entry in passwd file");
         self.erigon_username = Some(username);
         self.erigon_password = Some(password);
 
         async move { Ok(Some(serialize::json::json!({ "network": "mainnet" }))) }.boxed_local()
     }
 
-    fn stop<'a>(&mut self, _: &mut Context<Self>) -> EmptyResponse<'a> {
+    fn stop<'a>(&mut self, ctx: &mut Context<Self>) -> EmptyResponse<'a> {
+        let _ = remove_user_from_pass_file(
+            &ctx.conf.passwd_tool_path,
+            &ctx.conf.passwd_file_path,
+            &self.erigon_username.as_ref().unwrap(),
+        )
+        .expect("Unable to remove entry from passwd file");
+
         async move { Ok(()) }.boxed_local()
     }
 
@@ -100,18 +114,40 @@ async fn main() -> anyhow::Result<()> {
     ya_runtime_sdk::run::<ErigonRuntime>().await
 }
 
-fn generate_password_file(
+fn add_user_to_pass_file(
     passwd_bin: &String,
     passwd_file: &String,
     username: &String,
     password: &String,
 ) -> std::io::Result<Child> {
     Command::new(passwd_bin)
-        .arg("-cb")
+        .arg("-b")
         .arg(passwd_file)
         .arg(username)
         .arg(password)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .spawn()
+}
+
+fn remove_user_from_pass_file(
+    passwd_bin: &String,
+    passwd_file: &String,
+    username: &String,
+) -> std::io::Result<Child> {
+    Command::new(passwd_bin)
+        .arg("-D")
+        .arg(passwd_file)
+        .arg(username)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+}
+
+// A simple implementation of `touch path` (ignores existing files)
+fn touch(path: &Path) -> io::Result<()> {
+    match OpenOptions::new().create(true).write(true).open(path) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e),
+    }
 }
