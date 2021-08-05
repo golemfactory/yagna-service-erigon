@@ -9,12 +9,12 @@ __pycache__
 *.log
 
 # requestor client dependencies
-requestor/client/node_modules
-requestor/client/.pnp
+client/node_modules
+client/.pnp
 .pnp.js
 
 # requestor client production build
-requestor/client/build
+client/build
 
 # misc
 .DS_Store
@@ -23,3 +23,5 @@ requestor/client/build
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+ya-runtime-erigon/*.tar.gz

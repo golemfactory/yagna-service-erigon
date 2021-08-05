@@ -1,0 +1,10 @@
+[
+  {
+    "name": "erigon",
+    "version": "<VERSION>",
+    "supervisor-path": "exe-unit",
+    "runtime-path": "ya-runtime-erigon/ya-runtime-erigon",
+    "description": "Service wrapper for Erigon",
+    "extra-args": ["--runtime-managed-image"]
+  }
+]
