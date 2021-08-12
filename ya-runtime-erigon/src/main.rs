@@ -5,7 +5,7 @@ use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use tokio::process::{Child, Command};
 use ya_runtime_sdk::*;
@@ -51,13 +51,20 @@ struct BlockNumberRpcResponse {
 
 impl Runtime for ErigonRuntime {
     fn deploy<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
-        let path = Path::new(&ctx.conf.passwd_file_path);
-        touch(&path)
-            .expect(&("Wrong path to passwd_file_path: ".to_owned() + path.to_str().unwrap()));
+        let path = PathBuf::from(&ctx.conf.passwd_file_path);
+        let erigon_addr = ctx.conf.erigon_http_addr.clone();
+        let erigon_port = ctx.conf.erigon_http_port.clone();
 
-        verify_erigon_alive(&ctx.conf.erigon_http_addr, &ctx.conf.erigon_http_port).unwrap();
-
-        async move { Ok(None) }.boxed_local()
+        async move {
+            let _ = touch(&path).map_err(|_| {
+                error::Error::from_string(
+                    "Wrong path to passwd_file_path: ".to_owned() + path.to_str().unwrap(),
+                )
+            })?;
+            verify_erigon_alive(&erigon_addr, &erigon_port)?;
+            Ok(None)
+        }
+        .boxed_local()
     }
 
     fn start<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
@@ -70,29 +77,32 @@ impl Runtime for ErigonRuntime {
             .map(char::from)
             .take(ctx.conf.password_default_length)
             .collect();
+        self.erigon_username = Some(username.clone());
+        self.erigon_password = Some(password.clone());
 
-        let _ = add_user_to_pass_file(
-            &ctx.conf.passwd_tool_path,
-            &ctx.conf.passwd_file_path,
-            &username,
-            &password,
-        )
-        .expect("Unable to add entry in passwd file");
-        self.erigon_username = Some(username);
-        self.erigon_password = Some(password);
-
-        async move { Ok(Some(serialize::json::json!({ "network": "mainnet" }))) }.boxed_local()
+        let passwd_tool_path = ctx.conf.passwd_tool_path.clone();
+        let passwd_file_path = ctx.conf.passwd_file_path.clone();
+        async move {
+            add_user_to_pass_file(&passwd_tool_path, &passwd_file_path, &username, &password)
+                .map_err(|_| error::Error::from_string("Unable to add entry in passwd file"))?
+                .await?;
+            Ok(Some(serialize::json::json!({ "network": "mainnet" })))
+        }
+        .boxed_local()
     }
 
     fn stop<'a>(&mut self, ctx: &mut Context<Self>) -> EmptyResponse<'a> {
-        let _ = remove_user_from_pass_file(
-            &ctx.conf.passwd_tool_path,
-            &ctx.conf.passwd_file_path,
-            &self.erigon_username.as_ref().unwrap(),
-        )
-        .expect("Unable to remove entry from passwd file");
-
-        async move { Ok(()) }.boxed_local()
+        //
+        let passwd_tool_path = ctx.conf.passwd_tool_path.clone();
+        let passwd_file_path = ctx.conf.passwd_file_path.clone();
+        let erigon_username = self.erigon_username.as_ref().unwrap().clone();
+        async move {
+            remove_user_from_pass_file(&passwd_tool_path, &passwd_file_path, &erigon_username)
+                .map_err(|_| error::Error::from_string("Unable to remove entry from passwd file"))?
+                .await?;
+            Ok(())
+        }
+        .boxed_local()
     }
 
     fn run_command<'a>(
@@ -125,10 +135,10 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn add_user_to_pass_file(
-    passwd_bin: &String,
-    passwd_file: &String,
-    username: &String,
-    password: &String,
+    passwd_bin: &str,
+    passwd_file: &str,
+    username: &str,
+    password: &str,
 ) -> std::io::Result<Child> {
     Command::new(passwd_bin)
         .arg("-b")
@@ -141,9 +151,9 @@ fn add_user_to_pass_file(
 }
 
 fn remove_user_from_pass_file(
-    passwd_bin: &String,
-    passwd_file: &String,
-    username: &String,
+    passwd_bin: &str,
+    passwd_file: &str,
+    username: &str,
 ) -> std::io::Result<Child> {
     Command::new(passwd_bin)
         .arg("-D")
@@ -156,18 +166,19 @@ fn remove_user_from_pass_file(
 
 // A simple implementation of `touch path` (ignores existing files)
 fn touch(path: &Path) -> io::Result<()> {
-    match OpenOptions::new().create(true).write(true).open(path) {
-        Ok(_) => Ok(()),
-        Err(e) => Err(e),
-    }
+    OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open(path)
+        .map(|_| ())
 }
 
 fn verify_erigon_alive(
-    erigon_rpc_host: &String,
-    erigon_rpc_port: &String,
-) -> Result<(), anyhow::Error> {
+    erigon_rpc_host: &str,
+    erigon_rpc_port: &str,
+) -> Result<BlockNumberRpcResponse, ya_runtime_sdk::error::Error> {
     let client = Client::new();
-    let res = client
+    client
         .post(format!("http://{}:{}", erigon_rpc_host, erigon_rpc_port))
         .header("Content-Type", "application/json")
         .body(
@@ -178,12 +189,7 @@ fn verify_erigon_alive(
             .to_string(),
         )
         .send()
-        .unwrap();
-
-    assert!(res.status().is_success());
-    let _: BlockNumberRpcResponse = res
-        .json()
-        .expect("Recieved RPC response has incorrect structure");
-
-    Ok(())
+        .unwrap()
+        .json::<BlockNumberRpcResponse>()
+        .map_err(|_| error::Error::from_string("Recieved RPC response has incorrect structure"))
 }
