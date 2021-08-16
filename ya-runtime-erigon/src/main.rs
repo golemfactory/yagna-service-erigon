@@ -1,12 +1,12 @@
-use futures::FutureExt;
+use futures::{FutureExt, TryFutureExt};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
-use std::fs::OpenOptions;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
+use tokio::fs::OpenOptions;
 use tokio::process::{Child, Command};
 use ya_runtime_sdk::*;
 
@@ -56,11 +56,13 @@ impl Runtime for ErigonRuntime {
         let erigon_port = ctx.conf.erigon_http_port.clone();
 
         async move {
-            let _ = touch(&path).map_err(|_| {
-                error::Error::from_string(
-                    "Wrong path to passwd_file_path: ".to_owned() + path.to_str().unwrap(),
-                )
-            })?;
+            let _ = touch(&path)
+                .map_err(|_| {
+                    error::Error::from_string(
+                        "Wrong path to passwd_file_path: ".to_owned() + path.to_str().unwrap(),
+                    )
+                })
+                .await?;
             verify_erigon_alive(&erigon_addr, &erigon_port)?;
             Ok(None)
         }
@@ -165,11 +167,12 @@ fn remove_user_from_pass_file(
 }
 
 // A simple implementation of `touch path` (ignores existing files)
-fn touch(path: &Path) -> io::Result<()> {
+async fn touch(path: &Path) -> io::Result<()> {
     OpenOptions::new()
         .create(true)
         .write(true)
         .open(path)
+        .await
         .map(|_| ())
 }
 
