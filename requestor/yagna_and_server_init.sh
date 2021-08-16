@@ -21,5 +21,6 @@ sleep 5
 #   3.  Set the environment for the server app
 export YAGNA_APPKEY=$(yagna app-key list | tail -2 | head -1 | head -c53 | tail -c32)
 
-#   4.  Start server (TODO: gunicorn run)
-python3 run_server.py
+#   4.  Start the server
+#       NOTE: this will not work with more than one worker, don't try that
+gunicorn -b 0.0.0.0:5000 -k uvicorn.workers.UvicornWorker run_server:app
