@@ -22,12 +22,11 @@ RUN python3 -m pip install -r requirements.txt
 RUN rm yagna.deb requirements.txt
 
 COPY yagna_and_server_init.sh .
-COPY stop.sh                  .
-RUN chmod +x yagna_and_server_init.sh stop.sh
+RUN chmod +x yagna_and_server_init.sh
 
 COPY server        server
 COPY run_server.py run_server.py
 
 ENV PYTHONUNBUFFERED=1
 
-ENTRYPOINT ./yagna_and_server_init.sh
+ENTRYPOINT ["./yagna_and_server_init.sh"]

@@ -22,5 +22,7 @@ sleep 5
 export YAGNA_APPKEY=$(yagna app-key list | tail -2 | head -1 | head -c53 | tail -c32)
 
 #   4.  Start the server
-#       NOTE: this will not work with more than one worker, don't try that
-gunicorn -b 0.0.0.0:5000 -k uvicorn.workers.UvicornWorker run_server:app
+#       NOTE:  this will not work with more than one worker, don't try that
+#       NOTE2: `exec` because we want gunicorn to become the main process 
+#              (and thus the target of SIGTERM sent by `docker stop`)
+exec gunicorn -b 0.0.0.0:5000 -k uvicorn.workers.UvicornWorker run_server:app
