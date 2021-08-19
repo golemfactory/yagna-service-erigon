@@ -29,4 +29,4 @@ COPY run_server.py run_server.py
 
 ENV PYTHONUNBUFFERED=1
 
-ENTRYPOINT ./yagna_and_server_init.sh
+ENTRYPOINT ["./yagna_and_server_init.sh"]

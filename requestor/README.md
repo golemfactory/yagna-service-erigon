@@ -34,7 +34,7 @@ Default name of this subnet is `erigon`.
 
 ## Stop requestor server gracefully
 
-    docker exec -it <SERVER-CONTAINER-NAME> pkill python
+    docker stop <SERVER-CONTAINER-NAME>
 
 ## Test requestor server
 
