@@ -1,3 +1,6 @@
+# Needed for GitHub actions to work, 
+# see https://github.com/golemfactory/yagna-service-erigon/pull/39
+
 [workspace]
 members = [
 	"ya-runtime-erigon"
