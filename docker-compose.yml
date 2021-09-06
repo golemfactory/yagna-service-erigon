@@ -1,0 +1,21 @@
+version: '3.7'
+
+services:
+
+    requestor:
+        build:
+            dockerfile: server.Dockerfile
+            context: ./requestor
+        image: erigon-server
+        ports:
+            - 5000:5000
+
+    client:
+        build:
+            dockerfile: docker/Dockerfile
+            context: ./client
+        image: erigon-client
+        environment:
+            - API_URL=http://requestor:5000
+        ports:
+            - 8000:80
