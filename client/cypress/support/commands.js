@@ -1,3 +1,5 @@
+import 'cypress-wait-until';
+
 Cypress.Commands.add('startNewNodeClick', (text = 'Start new node') => cy.contains(text, { matchCase: false }).click());
 
 Cypress.Commands.add('notify', (value, type) =>

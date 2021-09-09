@@ -36,6 +36,7 @@
     "@typescript-eslint/eslint-plugin": "^4.15.0",
     "@typescript-eslint/parser": "^4.15.0",
     "cypress": "8.1.0",
+    "cypress-wait-until": "^1.7.1",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.0",
     "eslint-plugin-react": "^7.21.5",
@@ -44,7 +45,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "yarn start & yarn cypress run"
+    "test": "yarn cypress run"
   },
   "eslintConfig": {
     "extends": [
@@ -63,5 +64,5 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "https://erigon.golem.network/"
+  "proxy": "http://localhost:5000/"
 }
