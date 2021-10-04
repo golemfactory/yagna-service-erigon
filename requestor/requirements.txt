@@ -5,4 +5,4 @@ web3==5.20.0
 gunicorn==20.1.0
 uvicorn==0.15.0
 
-git+https://github.com/golemfactory/yapapi-service-manager.git
+git+https://github.com/golemfactory/yapapi-service-manager.git@b427d7946298ab0cdd01e023d81141d64619a722
