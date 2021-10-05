@@ -40,7 +40,7 @@ class Erigon(Service):
         self._ctx.run('STATUS')
         processing_future = yield self._ctx.commit()
         result = self._parse_status_result(processing_future.result())
-        self.url, self.auth, self.network = result['url'], result['auth'], result['network']
+        self.url, self.auth, self.network = result['url'], result['auth'], result.get('network', 'mainnet')
 
     @staticmethod
     def _parse_status_result(raw_data: 'List[CommandExecuted]'):

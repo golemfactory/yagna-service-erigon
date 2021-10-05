@@ -16,7 +16,7 @@ The application consist of three major components:
 
 ---
 
-To use the application locally, run `docker-compose up` and open [http://localhost:8000]()
+To use the application locally, run `docker-compose up` and open [http://localhost:8000](). You can provide your own subnet by setting up the `SUBNET_TAG` environment variable.
 
 Instructions how to run and test the requestor server are [here](https://github.com/golemfactory/yagna-service-erigon/blob/master/requestor/README.md).
 
