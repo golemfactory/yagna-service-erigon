@@ -1,26 +1,6 @@
 /// <reference types="cypress" />
 
 describe('Erigolem Dashboard Page tests', () => {
-  before(() => {
-    cy.waitUntil(
-      () =>
-        cy
-          .request({
-            method: 'GET',
-            url: 'http://0.0.0.0:5000/getInstances',
-            headers: {
-              Authorization: 'Bearer 0x25bb4351B805884663d278F10A2096437Ee29855',
-            },
-          })
-          .its('status')
-          .then((status) => status === 200),
-      {
-        interval: 2000,
-        timeout: 60000,
-      },
-    );
-  });
-
   beforeEach(() => cy.visit(''));
 
   const newNodeLabel = ' is my new node';
@@ -47,17 +27,9 @@ describe('Erigolem Dashboard Page tests', () => {
   });
 
   it('Checks if New Node is running', () => {
-    cy.waitUntil(
-      () =>
-        cy
-          .get(`span[role=status]`)
-          .invoke('text')
-          .then((text) => text === 'Running'),
-      {
-        interval: 5000,
-        timeout: 30000,
-      },
-    );
+    cy.get(`span[role=status]`)
+      .invoke('text')
+      .then((text) => text === 'Running');
   });
 
   it('Checks if user can copy Address', () => {
@@ -90,9 +62,5 @@ describe('Erigolem Dashboard Page tests', () => {
       cy.contains('Choose network');
       cy.startNewNodeClick('Start node');
     });
-  });
-
-  after(() => {
-    cy.exec('docker-compose down');
   });
 });

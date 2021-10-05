@@ -1,6 +1,7 @@
 {
   "baseUrl": "http://localhost:8000",
   "projectId": "1w3oaq",
+  "defaultCommandTimeout": 30000,
   "viewportHeight": 1000,
   "viewportWidth": 1280,
   "component": {
