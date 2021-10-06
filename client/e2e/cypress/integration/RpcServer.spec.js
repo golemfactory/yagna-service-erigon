@@ -1,9 +1,7 @@
 /// <reference types="cypress" />
 
 describe('Erigolem RPC Server tests', () => {
-  beforeEach(() => {
-    cy.visit('http://localhost:3000');
-  });
+  beforeEach(() => cy.visit(''));
 
   const addressLabel = 'Address';
 
