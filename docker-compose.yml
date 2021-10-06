@@ -7,6 +7,8 @@ services:
             dockerfile: server.Dockerfile
             context: ./requestor
         image: erigon-server
+        environment:
+            - SUBNET_TAG=${SUBNET_TAG:-erigon}
         ports:
             - 5000:5000
 
