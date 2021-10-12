@@ -18,6 +18,7 @@ The application consist of three major components:
 
 To use the application locally, run `docker-compose up` and open [http://localhost:8000](). You can provide your own subnet by setting up the `SUBNET_TAG` environment variable.
 
+Instructions how to run client and e2e tests are [here](https://github.com/golemfactory/yagna-service-erigon/blob/master/client/README.md).
 Instructions how to run and test the requestor server are [here](https://github.com/golemfactory/yagna-service-erigon/blob/master/requestor/README.md).
 
 Full project documentation can be found in the [Golem handbook](https://handbook.golem.network/requestor-tutorials/service-development/service-example-2-managed-erigon).

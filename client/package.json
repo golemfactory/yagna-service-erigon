@@ -44,7 +44,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "yarn cypress run"
+    "test:run": "cd e2e && cypress run",
+    "test:open": "cd e2e && cypress open"
   },
   "eslintConfig": {
     "extends": [
