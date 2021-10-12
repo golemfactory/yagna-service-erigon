@@ -17,7 +17,6 @@ Default name of this subnet is `erigon`.
 * `run_erigon_service.py` - simple dev script that starts an erigon service and keeps it running until stopped
 * `server` - http server + requestor code ([Quart](https://pgjones.gitlab.io/quart/) + [yapapi-service-manager](https://github.com/golemfactory/yapapi-service-manager))
 * `server.Dockerfile`, `yagna_and_server_init.sh` - `server` running on [docker](https://docs.docker.com/)
-* `client` - frontend code
 * `tests`, `tests.Dockerfile` - test if the server works properly
 
 ## Run requestor server
