@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  requestor:
+    extends:
+      file: ../../docker-compose.yml
+      service: requestor
+
+  client:
+    extends:
+      file: ../../docker-compose.yml
+      service: client
+
+  cypress:
+    image: 'cypress/included:7.3.0'
+    depends_on:
+      - requestor
+      - client
+    environment:
+      - CYPRESS_baseUrl=http://client:80
+    working_dir: /e2e
+    volumes:
+      - ./:/e2e

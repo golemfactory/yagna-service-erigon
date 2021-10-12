@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useWeb3React } from '@web3-react/core';
 import { orderBy } from 'lodash';
 import { status } from './components/Node/statuses';
 import { Button, Layout, notify, TabPanel, Tabs, Toast } from 'components';
+import { useMetamask } from 'app/App';
 import { useToggle } from 'hooks/useToggle';
 import { Node, NodeForm, NodeFormData, NodeProps } from './components';
 import httpRequest from 'utils/httpRequest';
@@ -14,7 +14,7 @@ const DashboardPage = () => {
 
   const nodeForm = useToggle({});
 
-  const { account } = useWeb3React();
+  const { account } = useMetamask();
 
   const handleError = () => {
     setNodes(initialState);

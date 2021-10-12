@@ -26,7 +26,7 @@ const Node = ({ node, children }: { node: NodeProps; children?: ReactNode }) => 
   const password = useToggle({});
 
   return (
-    <StyledNode>
+    <StyledNode role="node">
       <Row>
         <StyledCol xs={4}>
           <div>Node name</div>
@@ -38,7 +38,9 @@ const Node = ({ node, children }: { node: NodeProps; children?: ReactNode }) => 
         </StyledCol>
         <StyledCol xs={4}>
           <div>Status</div>
-          <StyledStatus state={node.status}>{upperFirst(node.status)}</StyledStatus>
+          <StyledStatus role="status" state={node.status}>
+            {upperFirst(node.status)}
+          </StyledStatus>
         </StyledCol>
       </Row>
       <Row>
