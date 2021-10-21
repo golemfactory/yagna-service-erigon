@@ -169,7 +169,7 @@ fn remove_user_from_pass_file(
 // A simple implementation of `touch path` (ignores existing files)
 async fn touch(path: &Path) -> io::Result<()> {
     OpenOptions::new()
-        .create(true)
+        .read(true)
         .write(true)
         .open(path)
         .await
