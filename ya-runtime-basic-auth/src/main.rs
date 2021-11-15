@@ -21,10 +21,10 @@ pub struct BasicAuthConf {
 impl Default for BasicAuthConf {
     fn default() -> Self {
         BasicAuthConf {
-            service_prefix: "erigolem".to_string(),
-            public_addr: "http://erigon.localhost:8545".to_string(),
+            service_prefix: "yagna_service".to_string(),
+            public_addr: "http://yagna.service:8080".to_string(),
             passwd_tool_path: "htpasswd".to_string(),
-            passwd_file_path: "/etc/nginx/erigon_htpasswd".to_string(),
+            passwd_file_path: "/etc/nginx/htpasswd".to_string(),
             password_default_length: 15,
         }
     }
@@ -122,8 +122,7 @@ impl Runtime for BasicAuthRuntime {
         );
 
         ctx.command(|mut run_ctx| async move {
-            let stdout = format!("{}", auth_data);
-            run_ctx.stdout(stdout).await;
+            run_ctx.stdout(format!("{}", auth_data)).await;
             Ok(())
         })
     }
