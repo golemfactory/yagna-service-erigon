@@ -9,19 +9,19 @@ use tokio::fs::OpenOptions;
 use tokio::process::{Child, Command};
 use ya_runtime_sdk::*;
 
-const AUTH_ERIGON_USER_PREFIX: &str = "erigolem";
-
 #[derive(Deserialize, Serialize)]
-pub struct ErigonConf {
+pub struct BasicAuthConf {
+    service_prefix: String,
     public_addr: String,
     passwd_tool_path: String,
     passwd_file_path: String,
     password_default_length: usize,
 }
 
-impl Default for ErigonConf {
+impl Default for BasicAuthConf {
     fn default() -> Self {
-        ErigonConf {
+        BasicAuthConf {
+            service_prefix: "erigolem".to_string(),
             public_addr: "http://erigon.localhost:8545".to_string(),
             passwd_tool_path: "htpasswd".to_string(),
             passwd_file_path: "/etc/nginx/erigon_htpasswd".to_string(),
@@ -31,13 +31,13 @@ impl Default for ErigonConf {
 }
 
 #[derive(Default, RuntimeDef)]
-#[conf(ErigonConf)]
-pub struct ErigonRuntime {
-    erigon_username: Option<String>,
-    erigon_password: Option<String>,
+#[conf(BasicAuthConf)]
+pub struct BasicAuthRuntime {
+    username: Option<String>,
+    password: Option<String>,
 }
 
-impl Runtime for ErigonRuntime {
+impl Runtime for BasicAuthRuntime {
     fn deploy<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
         let path = PathBuf::from(&ctx.conf.passwd_file_path);
 
@@ -56,7 +56,7 @@ impl Runtime for ErigonRuntime {
 
     fn start<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
         // Generate user & password entry with passwd tool
-        let username = format!("{}_{}", AUTH_ERIGON_USER_PREFIX, std::process::id());
+        let username = format!("{}_{}", ctx.conf.service_prefix, std::process::id());
 
         let rng = thread_rng();
         let password: String = rng
@@ -64,16 +64,29 @@ impl Runtime for ErigonRuntime {
             .map(char::from)
             .take(ctx.conf.password_default_length)
             .collect();
-        self.erigon_username = Some(username.clone());
-        self.erigon_password = Some(password.clone());
+        self.username = Some(username.clone());
+        self.password = Some(password.clone());
 
         let passwd_tool_path = ctx.conf.passwd_tool_path.clone();
         let passwd_file_path = ctx.conf.passwd_file_path.clone();
+
+        let auth_data = serialize::json::json!(
+            {
+                "service": &ctx.conf.service_prefix,
+                "url": &ctx.conf.public_addr,
+                "auth": {
+                    "user": &self.username,
+                    "password": &self.password
+                }
+            }
+        );
+
         async move {
             add_user_to_pass_file(&passwd_tool_path, &passwd_file_path, &username, &password)
                 .map_err(|_| error::Error::from_string("Unable to add entry in passwd file"))?
                 .await?;
-            Ok(Some(serialize::json::json!({ "network": "mainnet" })))
+
+            Ok(Some(auth_data))
         }
         .boxed_local()
     }
@@ -81,9 +94,9 @@ impl Runtime for ErigonRuntime {
     fn stop<'a>(&mut self, ctx: &mut Context<Self>) -> EmptyResponse<'a> {
         let passwd_tool_path = ctx.conf.passwd_tool_path.clone();
         let passwd_file_path = ctx.conf.passwd_file_path.clone();
-        let erigon_username = self.erigon_username.as_ref().unwrap().clone();
+        let username = self.username.as_ref().unwrap().clone();
         async move {
-            remove_user_from_pass_file(&passwd_tool_path, &passwd_file_path, &erigon_username)
+            remove_user_from_pass_file(&passwd_tool_path, &passwd_file_path, &username)
                 .map_err(|_| error::Error::from_string("Unable to remove entry from passwd file"))?
                 .await?;
             Ok(())
@@ -97,18 +110,19 @@ impl Runtime for ErigonRuntime {
         _mode: RuntimeMode,
         ctx: &mut Context<Self>,
     ) -> ProcessIdResponse<'a> {
-        let erigon_status_data = serialize::json::json!(
+        let auth_data = serialize::json::json!(
             {
+                "service": &ctx.conf.service_prefix,
                 "url": &ctx.conf.public_addr,
                 "auth": {
-                    "user": &self.erigon_username,
-                    "password": &self.erigon_password
+                    "user": &self.username,
+                    "password": &self.password
                 }
             }
         );
 
         ctx.command(|mut run_ctx| async move {
-            let stdout = format!("{}", erigon_status_data);
+            let stdout = format!("{}", auth_data);
             run_ctx.stdout(stdout).await;
             Ok(())
         })
@@ -117,7 +131,7 @@ impl Runtime for ErigonRuntime {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    ya_runtime_sdk::run::<ErigonRuntime>().await
+    ya_runtime_sdk::run::<BasicAuthRuntime>().await
 }
 
 fn add_user_to_pass_file(
