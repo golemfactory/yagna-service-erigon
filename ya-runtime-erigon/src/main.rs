@@ -1,7 +1,6 @@
 use futures::{FutureExt, TryFutureExt};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
-use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::io;
 use std::path::{Path, PathBuf};
@@ -14,8 +13,6 @@ const AUTH_ERIGON_USER_PREFIX: &str = "erigolem";
 
 #[derive(Deserialize, Serialize)]
 pub struct ErigonConf {
-    erigon_http_addr: String,
-    erigon_http_port: String,
     public_addr: String,
     passwd_tool_path: String,
     passwd_file_path: String,
@@ -25,8 +22,6 @@ pub struct ErigonConf {
 impl Default for ErigonConf {
     fn default() -> Self {
         ErigonConf {
-            erigon_http_addr: "127.0.0.1".to_string(),
-            erigon_http_port: "8555".to_string(),
             public_addr: "http://erigon.localhost:8545".to_string(),
             passwd_tool_path: "htpasswd".to_string(),
             passwd_file_path: "/etc/nginx/erigon_htpasswd".to_string(),
@@ -42,18 +37,9 @@ pub struct ErigonRuntime {
     erigon_password: Option<String>,
 }
 
-#[derive(Deserialize, Debug)]
-struct BlockNumberRpcResponse {
-    jsonrpc: String,
-    id: u32,
-    result: String,
-}
-
 impl Runtime for ErigonRuntime {
     fn deploy<'a>(&mut self, ctx: &mut Context<Self>) -> OutputResponse<'a> {
         let path = PathBuf::from(&ctx.conf.passwd_file_path);
-        let erigon_addr = ctx.conf.erigon_http_addr.clone();
-        let erigon_port = ctx.conf.erigon_http_port.clone();
 
         async move {
             let _ = touch(&path)
@@ -63,7 +49,6 @@ impl Runtime for ErigonRuntime {
                     )
                 })
                 .await?;
-            verify_erigon_alive(&erigon_addr, &erigon_port)?;
             Ok(None)
         }
         .boxed_local()
@@ -94,7 +79,6 @@ impl Runtime for ErigonRuntime {
     }
 
     fn stop<'a>(&mut self, ctx: &mut Context<Self>) -> EmptyResponse<'a> {
-        //
         let passwd_tool_path = ctx.conf.passwd_tool_path.clone();
         let passwd_file_path = ctx.conf.passwd_file_path.clone();
         let erigon_username = self.erigon_username.as_ref().unwrap().clone();
@@ -174,25 +158,4 @@ async fn touch(path: &Path) -> io::Result<()> {
         .open(path)
         .await
         .map(|_| ())
-}
-
-fn verify_erigon_alive(
-    erigon_rpc_host: &str,
-    erigon_rpc_port: &str,
-) -> Result<BlockNumberRpcResponse, ya_runtime_sdk::error::Error> {
-    let client = Client::new();
-    client
-        .post(format!("http://{}:{}", erigon_rpc_host, erigon_rpc_port))
-        .header("Content-Type", "application/json")
-        .body(
-            serialize::json::json!({
-                "id": 1,
-                "method": "eth_blockNumber"
-            })
-            .to_string(),
-        )
-        .send()
-        .unwrap()
-        .json::<BlockNumberRpcResponse>()
-        .map_err(|_| error::Error::from_string("Recieved RPC response has incorrect structure"))
 }
