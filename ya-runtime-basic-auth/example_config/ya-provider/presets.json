@@ -1,0 +1,69 @@
+{
+  "ver": "V1",
+  "active": [
+    "erigon",
+    "lhouse",
+    "wasmtime",
+    "vm",
+    "ya-runtime-erigon"
+  ],
+  "presets": [
+    {
+      "name": "default",
+      "exeunit-name": "wasmtime",
+      "pricing-model": "linear",
+      "initial-price": 0.0,
+      "usage-coeffs": {}
+    },
+    {
+      "name": "vm",
+      "exeunit-name": "vm",
+      "pricing-model": "linear",
+      "initial-price": 0.0,
+      "usage-coeffs": {
+        "golem.usage.cpu_sec": 0.00002777777777777778,
+        "golem.usage.duration_sec": 5.555555555555556e-6
+      }
+    },
+    {
+      "name": "ya-runtime-erigon",
+      "exeunit-name": "ya-runtime-erigon",
+      "pricing-model": "linear",
+      "initial-price": 0.0,
+      "usage-coeffs": {
+        "golem.usage.cpu_sec": 0.00002777777777777778,
+        "golem.usage.duration_sec": 5.555555555555556e-6
+      }
+    },
+    {
+      "name": "wasmtime",
+      "exeunit-name": "wasmtime",
+      "pricing-model": "linear",
+      "initial-price": 0.0,
+      "usage-coeffs": {
+        "golem.usage.duration_sec": 5.555555555555556e-6,
+        "golem.usage.cpu_sec": 0.00002777777777777778
+      }
+    },
+    {
+      "name": "lhouse",
+      "exeunit-name": "lhouse",
+      "pricing-model": "linear",
+      "initial-price": 0.0,
+      "usage-coeffs": {
+        "golem.usage.cpu_sec": 0.00002777777777777778,
+        "golem.usage.duration_sec": 5.555555555555556e-6
+      }
+    },
+    {
+      "name": "erigon",
+      "exeunit-name": "ya-runtime-erigon",
+      "pricing-model": "linear",
+      "initial-price": 0.0,
+      "usage-coeffs": {
+        "golem.usage.cpu_sec": 0.00002777777777777778,
+        "golem.usage.duration_sec": 5.555555555555556e-6
+      }
+    }
+  ]
+}

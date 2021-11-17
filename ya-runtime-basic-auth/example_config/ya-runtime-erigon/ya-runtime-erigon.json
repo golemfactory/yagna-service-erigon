@@ -1,0 +1,7 @@
+{
+  "service_prefix": "erigon",
+  "public_addr": "http://erigon.service:8080",
+  "passwd_tool_path": "htpasswd",
+  "passwd_file_path": "/home/pnowosie/.local/share/ya-runtime-erigon/htpasswd",
+  "password_default_length": 15
+}
