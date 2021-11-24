@@ -35,13 +35,12 @@ jobs:
           command: build
           args: >
             --release
-            --features static-openssl
             --target aarch64-unknown-linux-musl
       - name: Copy binaries
         run: |
           mkdir build
-          cp ya-runtime-erigon/runtime-descriptor-template.json build
-          cp target/aarch64-unknown-linux-musl/release/ya-runtime-erigon build
+          cp ya-runtime-basic-auth/runtime-descriptor-template.json build
+          cp target/aarch64-unknown-linux-musl/release/ya-runtime-basic-auth build
       - name: 'Build artifacts upload'
         uses: actions/upload-artifact@v2
         with:

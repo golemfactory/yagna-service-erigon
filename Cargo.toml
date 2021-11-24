@@ -3,5 +3,5 @@
 
 [workspace]
 members = [
-	"ya-runtime-erigon"
+	"ya-runtime-basic-auth"
 ]
