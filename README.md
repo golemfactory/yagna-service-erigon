@@ -36,5 +36,5 @@ $ python requestor/erigolem_cli.py --keystore ./keystore.json --password <PASSWO
 $ python requestor/erigolem_cli.py --keystore ./keystore.json --password <PASSWORD> stop a2303ae2c2de4a83a86a8fa69cb9b303
 {'auth': {'password': '4P0o087q43FlmoP', 'user': 'erigolem'}, 'created_at': '2022-03-07T15:35:59.355692', 'id': 'a2303ae2c2de4a83a86a8fa69cb9b303', 'init_params': {'network': 'goerli'}, 'name': 'My Node', 'network': 'goerli', 'status': 'running', 'url': 'https://0.erigon.golem.network:8545'}
 $ python requestor/erigolem_cli.py --keystore ./keystore.json --password <PASSWORD> list 
-[{'id': 'ce139636bb794d2990261aff71651416', 'status': 'failed', 'name': 'erigon_ce139636bb794d2990261aff71651416', 'init_params': {'name': 'My Node', 'params': {'network': 'goerli'}}, 'created_at': '2022-03-07T15:34:51.311091'}, {'id': 'a2303ae2c2de4a83a86a8fa69cb9b303', 'status': 'stopped', 'name': 'My Node', 'init_params': {'network': 'goerli'}, 'created_at': '2022-03-07T15:35:59.355692', 'stopped_at': '2022-03-07T15:36:31.939827'}]
+[{'id': 'a2303ae2c2de4a83a86a8fa69cb9b303', 'status': 'stopped', 'name': 'My Node', 'init_params': {'network': 'goerli'}, 'created_at': '2022-03-07T15:35:59.355692', 'stopped_at': '2022-03-07T15:36:31.939827'}]
 ```
