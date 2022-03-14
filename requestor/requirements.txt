@@ -1,3 +1,4 @@
+# Server requirements
 Quart==0.15.1
 quart-cors==0.5.0
 web3==5.20.0
@@ -6,3 +7,9 @@ gunicorn==20.1.0
 uvicorn==0.15.0
 
 git+https://github.com/golemfactory/yapapi-service-manager.git@b427d7946298ab0cdd01e023d81141d64619a722
+
+# CLI requirements
+click==8.0.4
+click-logging==1.0.1
+pydantic==1.9.0
+requests==2.27.1
