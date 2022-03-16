@@ -1,7 +1,9 @@
 import json
 import logging
+import threading
 import time
 import urllib.parse as urlparse
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional, TYPE_CHECKING
@@ -62,14 +64,25 @@ class Instance(BaseModel):
 
 
 class ErigolemClient:
+    # That's no mistake: threading.local() should be called once, not per thread
+    _thread_data = threading.local()
+
     def __init__(self, erigolem_url: str, keystore: 'TextIO', password: str):
         if not erigolem_url.endswith('/'):
             erigolem_url += '/'
         self._erigolem_url = erigolem_url
         private_key = w3.eth.account.decrypt(keystore.read(), password)
         self._account = w3.eth.account.from_key(private_key)
-        self._session = requests.Session()
-        self._session.headers.update({'Authorization': f'Bearer {self._account.address}'})
+
+    @property
+    def _session(self) -> requests.Session:
+        # Each thread should have its own session because requests.Session is not thread-safe
+        # See https://github.com/psf/requests/issues/2766 for details
+        if not hasattr(self._thread_data, 'session'):
+            self._thread_data.session = requests.Session()
+            self._thread_data.session.headers.update(
+                {'Authorization': f'Bearer {self._account.address}'})
+        return self._thread_data.session
 
     def _get(self, url: str) -> 'Any':
         url = urlparse.urljoin(self._erigolem_url, url)
@@ -107,6 +120,8 @@ class NetworkChecker:
         self._pending_timeout = timedelta(seconds=pending_timeout_sec)
         self._check_interval_sec = check_interval_sec
         self._init_params = init_params
+        self._executor = ThreadPoolExecutor()
+        self._shutdown = False
 
     def _get_active_instances(self) -> 'List[Instance]':
         return [i for i in self._client.get_instances() if i.is_active]
@@ -145,33 +160,38 @@ class NetworkChecker:
             self._recreate_instance(instance)
 
     def _check(self) -> None:
+        if self._shutdown:
+            logger.info('Network checker in shutdown. Skipping check')
+            return
+
         logger.info('Starting network check...')
         active_instances = self._get_active_instances()
         logger.info('Active instances: %d / %d', len(active_instances), self._num_instances)
 
+        # Create new instances if necessary
         num_new_instances = self._num_instances - len(active_instances)
         if num_new_instances > 0:
             logger.info('Creating %d new instances...', num_new_instances)
-            for _ in range(num_new_instances):
-                self._create_instance()
+            self._executor.map(lambda _: self._create_instance(), range(num_new_instances))
             logger.info('Finished creating new instances')
 
         stale_threshold = datetime.utcnow() - self._pending_timeout
-        for instance in active_instances:
-            if instance.status is not Status.running and instance.created_at < stale_threshold:
-                logger.debug('Stale instance: %s', instance)
-                self._recreate_instance(instance)
 
-        for instance in active_instances:
+        # Check if started instances are running and responsive
+        def check_active_instance(instance):
             if instance.status is Status.running:
                 self._check_instance(instance)
+            elif instance.created_at < stale_threshold:
+                self._recreate_instance(instance)
+        self._executor.map(check_active_instance, active_instances)
 
         logger.info('Network check done')
 
     def _stop(self) -> None:
         logger.info('Shutting down network checker...')
-        for instance in self._get_active_instances():
-            self._stop_instance(instance)
+        self._shutdown = True
+        self._executor.map(self._stop_instance, self._get_active_instances())
+        self._executor.shutdown()
         logger.info('Network checker shutdown complete')
 
     def run(self):
