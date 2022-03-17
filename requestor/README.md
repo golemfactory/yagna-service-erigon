@@ -61,11 +61,15 @@ All requests must contain a header `{'Authorization': 'Bearer [ETHEREUM_ADDRESS]
 
 ### Command-line interface
 
-You can use CLI to interact with the requestor server. First, generate a `keystore.json` file. You can export from yagna or use [vanity-eth](https://vanity-eth.tk/). Then you can list, create and stop erigon instances:
+All further examples assume having a Python environment set up and active. It needs to be done once before using the CLI.
 ```shell
-$ python3 -m venv .venv
-$ . .venv/bin/activate
-$ pip install -r requirements.txt
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+```
+
+You can use CLI to interact with the requestor server. First, generate a `keystore.json` file and save it under this (requestor) directory. You can export from yagna or use [vanity-eth](https://vanity-eth.tk/). Then you can list, create and stop erigon instances with CLI:
+```shell
 $ ./erigolem_cli.py --keystore ./keystore.json --password <PASSWORD> list 
 []
 $ ./erigolem_cli.py --keystore ./keystore.json --password <PASSWORD>  create '{"name": "My Node", "params": {"network": "goerli"}}'
