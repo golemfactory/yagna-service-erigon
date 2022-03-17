@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+
+    network_checker:
+        build:
+            dockerfile: network_checker.Dockerfile
+            context: ./requestor
+        image: network-checker
+        environment:
+            - ERIGOLEM_URL=http://requestor:5000
+            - NUM_INSTANCES=2
+        depends_on:
+            - requestor
