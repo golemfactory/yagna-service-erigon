@@ -22,19 +22,3 @@ Instructions how to run client and e2e tests are [here](https://github.com/golem
 Instructions how to run and test the requestor server are [here](https://github.com/golemfactory/yagna-service-erigon/blob/master/requestor/README.md).
 
 Full project documentation can be found in the [Golem handbook](https://handbook.golem.network/requestor-tutorials/service-development/service-example-2-managed-erigon).
-
----
- 
-You can use CLI to interact with the requestor server. First, generate a `keystore.json` file. You can export from yagna or use [vanity-eth](https://vanity-eth.tk/). Then you can list, create and stop erigon instances:
-```shell
-$ python requestor/erigolem_cli.py --keystore ./keystore.json --password <PASSWORD> list 
-[]
-$ python requestor/erigolem_cli.py --keystore ./keystore.json --password <PASSWORD>  create '{"name": "My Node", "params": {"network": "goerli"}}'
-{'created_at': '2022-03-07T15:35:59.355692', 'id': 'a2303ae2c2de4a83a86a8fa69cb9b303', 'init_params': {'network': 'goerli'}, 'name': 'My Node', 'status': 'pending'}
-$ python requestor/erigolem_cli.py --keystore ./keystore.json --password <PASSWORD> list
-[{'id': 'a2303ae2c2de4a83a86a8fa69cb9b303', 'status': 'running', 'name': 'My Node', 'init_params': {'network': 'goerli'}, 'created_at': '2022-03-07T15:35:59.355692', 'url': 'https://0.erigon.golem.network:8545', 'auth': {'password': '4P0o087q43FlmoP', 'user': 'erigolem'}, 'network': 'goerli'}]
-$ python requestor/erigolem_cli.py --keystore ./keystore.json --password <PASSWORD> stop a2303ae2c2de4a83a86a8fa69cb9b303
-{'auth': {'password': '4P0o087q43FlmoP', 'user': 'erigolem'}, 'created_at': '2022-03-07T15:35:59.355692', 'id': 'a2303ae2c2de4a83a86a8fa69cb9b303', 'init_params': {'network': 'goerli'}, 'name': 'My Node', 'network': 'goerli', 'status': 'running', 'url': 'https://0.erigon.golem.network:8545'}
-$ python requestor/erigolem_cli.py --keystore ./keystore.json --password <PASSWORD> list 
-[{'id': 'a2303ae2c2de4a83a86a8fa69cb9b303', 'status': 'stopped', 'name': 'My Node', 'init_params': {'network': 'goerli'}, 'created_at': '2022-03-07T15:35:59.355692', 'stopped_at': '2022-03-07T15:36:31.939827'}]
-```

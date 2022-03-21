@@ -51,8 +51,103 @@ Default name of this subnet is `erigon`.
 
 ## Use requestor server
 
+### Endpoints
+
 All requests must contain a header `{'Authorization': 'Bearer [ETHEREUM_ADDRESS]'}`
 
     GET  /getInstances      - list of all instances created by the user (includes stopped instances)
     POST /createInstance    - create new instance, this requires "params" in body and also accepts optional "name"
     POST /stopInstance/<id> - stop instance with id <id>
+
+### Command-line interface
+
+All further examples assume having a Python environment set up and active. It needs to be done once before using the CLI.
+```shell
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+```
+
+You can use CLI to interact with the requestor server. First, generate a `keystore.json` file and save it under this (requestor) directory. You can export from yagna or use [vanity-eth](https://vanity-eth.tk/). Then you can list, create and stop erigon instances with CLI:
+```shell
+$ ./erigolem_cli.py --keystore ./keystore.json --password <PASSWORD> list 
+[]
+$ ./erigolem_cli.py --keystore ./keystore.json --password <PASSWORD>  create '{"name": "My Node", "params": {"network": "goerli"}}'
+{'created_at': '2022-03-07T15:35:59.355692', 'id': 'a2303ae2c2de4a83a86a8fa69cb9b303', 'init_params': {'network': 'goerli'}, 'name': 'My Node', 'status': 'pending'}
+$ ./erigolem_cli.py --keystore ./keystore.json --password <PASSWORD> list
+[{'id': 'a2303ae2c2de4a83a86a8fa69cb9b303', 'status': 'running', 'name': 'My Node', 'init_params': {'network': 'goerli'}, 'created_at': '2022-03-07T15:35:59.355692', 'url': 'https://0.erigon.golem.network:8545', 'auth': {'password': '4P0o087q43FlmoP', 'user': 'erigolem'}, 'network': 'goerli'}]
+$ ./erigolem_cli.py --keystore ./keystore.json --password <PASSWORD> stop a2303ae2c2de4a83a86a8fa69cb9b303
+{'auth': {'password': '4P0o087q43FlmoP', 'user': 'erigolem'}, 'created_at': '2022-03-07T15:35:59.355692', 'id': 'a2303ae2c2de4a83a86a8fa69cb9b303', 'init_params': {'network': 'goerli'}, 'name': 'My Node', 'network': 'goerli', 'status': 'running', 'url': 'https://0.erigon.golem.network:8545'}
+$ ./erigolem_cli.py --keystore ./keystore.json --password <PASSWORD> list 
+[{'id': 'a2303ae2c2de4a83a86a8fa69cb9b303', 'status': 'stopped', 'name': 'My Node', 'init_params': {'network': 'goerli'}, 'created_at': '2022-03-07T15:35:59.355692', 'stopped_at': '2022-03-07T15:36:31.939827'}]
+```
+To see all commands and parameters run `./erigolem_cli.py --help`
+
+### Network checker
+
+CLI has an additional functionality – _network checker_. It is a service that keeps the network busy by maintaining a fixed number of active providers (`--num-instances`). Running nodes are periodically (`--check-interval-sec`) checked. These who take too long to start (`--pending-timeout-sec`) or fail to respond correctly to web3 requests are restarted.  
+
+Example usage:
+
+```shell
+$ ./erigolem_cli.py --password <PASSWORD> --log-level DEBUG net-check --num-instances 3 --check-interval-sec 20
+Starting network check...
+debug: Starting new HTTP connection (1): localhost:5000
+debug: http://localhost:5000 "GET /getInstances HTTP/1.1" 200 630
+Active instances: 0 / 3
+Creating 3 new instances...
+Creating new instance...
+debug: Starting new HTTP connection (1): localhost:5000
+Creating new instance...
+Creating new instance...
+Finished creating new instances
+debug: Starting new HTTP connection (1): localhost:5000
+debug: Starting new HTTP connection (1): localhost:5000
+Network check done
+debug: http://localhost:5000 "POST /createInstance HTTP/1.1" 201 154
+Instance d886d884f47c47d9aef05aa9fa984216 created
+debug: http://localhost:5000 "POST /createInstance HTTP/1.1" 201 154
+debug: http://localhost:5000 "POST /createInstance HTTP/1.1" 201 154
+Instance 2bce0c4a0072440f9e6e7a6373c0d1e1 created
+Instance fcddd90e058c4e569183424173407092 created
+...
+Starting network check...
+debug: Resetting dropped connection: localhost
+debug: http://localhost:5000 "GET /getInstances HTTP/1.1" 200 1677
+Active instances: 3 / 3
+Network check done
+debug: Making request. Method: eth_blockNumber
+debug: Making request HTTP. URI: https://3.erigon.golem.network:8545, Method: eth_blockNumber
+debug: Making request. Method: eth_blockNumber
+debug: Making request. Method: eth_blockNumber
+debug: Making request HTTP. URI: https://1.erigon.golem.network:8545, Method: eth_blockNumber
+debug: Making request HTTP. URI: https://0.erigon.golem.network:8545, Method: eth_blockNumber
+debug: Starting new HTTPS connection (1): 0.erigon.golem.network:8545
+debug: https://1.erigon.golem.network:8545 "POST / HTTP/1.1" 200 64
+debug: Getting response HTTP. URI: https://1.erigon.golem.network:8545, Method: eth_blockNumber, Response: {'jsonrpc': '2.0', 'id': 0, 'result': '0x0'}
+debug: Block: 0
+debug: https://0.erigon.golem.network:8545 "POST / HTTP/1.1" 200 64
+debug: Getting response HTTP. URI: https://0.erigon.golem.network:8545, Method: eth_blockNumber, Response: {'jsonrpc': '2.0', 'id': 0, 'result': '0x0'}
+debug: Block: 0
+debug: https://3.erigon.golem.network:8545 "POST / HTTP/1.1" 200 64
+debug: Getting response HTTP. URI: https://3.erigon.golem.network:8545, Method: eth_blockNumber, Response: {'jsonrpc': '2.0', 'id': 0, 'result': '0x0'}
+debug: Block: 0
+...
+^C
+Shutting down network checker...
+debug: Resetting dropped connection: localhost
+debug: http://localhost:5000 "GET /getInstances HTTP/1.1" 200 1677
+Stopping instance d886d884f47c47d9aef05aa9fa984216 ...
+debug: Resetting dropped connection: localhost
+Stopping instance fcddd90e058c4e569183424173407092 ...
+debug: Resetting dropped connection: localhost
+Stopping instance a3cb45bc85ab4db4885c3b299ea01a1d ...
+debug: Resetting dropped connection: localhost
+debug: http://localhost:5000 "POST /stopInstance/fcddd90e058c4e569183424173407092 HTTP/1.1" 200 273
+Instance fcddd90e058c4e569183424173407092 stopped.
+debug: http://localhost:5000 "POST /stopInstance/a3cb45bc85ab4db4885c3b299ea01a1d HTTP/1.1" 200 273
+Instance a3cb45bc85ab4db4885c3b299ea01a1d stopped.
+debug: http://localhost:5000 "POST /stopInstance/d886d884f47c47d9aef05aa9fa984216 HTTP/1.1" 200 273
+Instance d886d884f47c47d9aef05aa9fa984216 stopped.
+Network checker shutdown complete
+```
