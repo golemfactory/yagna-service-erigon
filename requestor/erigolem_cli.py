@@ -8,7 +8,7 @@ import urllib.parse as urlparse
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
 
 import click
 import click_logging  # type: ignore
@@ -20,7 +20,7 @@ from requests.auth import HTTPBasicAuth
 from web3.auto import w3
 
 if TYPE_CHECKING:
-    from typing import TextIO, Any, List
+    from typing import TextIO, Any
 
 logger = logging.getLogger()
 click_logging.basic_config(logger)
@@ -63,6 +63,10 @@ class Instance(BaseModel):
     @property
     def is_active(self) -> bool:
         return self.status in (Status.pending, Status.starting, Status.running)
+
+
+class InstanceList(BaseModel):
+    __root__: List[Instance]
 
 
 class ErigolemClient:
@@ -226,7 +230,7 @@ def get_instances(client: ErigolemClient, active_only: bool):
     instances = client.get_instances()
     if active_only:
         instances = [i for i in instances if i.is_active]
-    click.echo(instances)
+    click.echo(InstanceList(__root__=instances).json())
 
 
 @cli.command(name='create')
@@ -235,7 +239,7 @@ def get_instances(client: ErigolemClient, active_only: bool):
 def create_instance(client: ErigolemClient, params: str):
     params_dict = json.loads(params)
     instance = client.create_instance(params_dict)
-    click.echo(instance)
+    click.echo(instance.json())
 
 
 @cli.command(name='stop')
@@ -243,7 +247,7 @@ def create_instance(client: ErigolemClient, params: str):
 @click.pass_obj
 def stop_instance(client: ErigolemClient, instance_id: str):
     instance = client.stop_instance(instance_id)
-    click.echo(instance)
+    click.echo(instance.json())
 
 
 @cli.command(name='net-check')
