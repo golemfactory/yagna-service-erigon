@@ -217,7 +217,7 @@ class NetworkChecker:
 @click_logging.simple_verbosity_option(logger, '-l', '--log-level')
 @click.option('--erigolem-url', default='http://localhost:5000/', envvar='ERIGOLEM_URL')
 @click.option('--keystore', type=click.File(), default='keystore.json', envvar='KEYSTORE')
-@click.option('--password', envvar='PASSWORD')
+@click.option('--password', default='', envvar='PASSWORD')
 @click.pass_context
 def cli(ctx, erigolem_url, keystore, password):
     ctx.obj = ErigolemClient(erigolem_url, keystore, password)

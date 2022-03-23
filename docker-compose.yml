@@ -11,6 +11,11 @@ services:
             - SUBNET_TAG=${SUBNET_TAG:-erigon}
         ports:
             - 5000:5000
+        healthcheck:
+            test: ["CMD", "curl", "http://localhost:5000"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
 
     client:
         build:
@@ -21,3 +26,5 @@ services:
             - API_URL=http://requestor:5000
         ports:
             - 8000:80
+        depends_on:
+            - requestor
