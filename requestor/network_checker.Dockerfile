@@ -1,6 +1,9 @@
 FROM python:3.8-slim
 WORKDIR /network_checker/
 
+RUN apt update \
+    && apt install -y git gcc
+
 COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
 
