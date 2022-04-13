@@ -4,22 +4,20 @@ from typing import TYPE_CHECKING
 
 from quart import Quart, request, abort, jsonify
 from quart_cors import cors
-from yapapi_service_manager import ServiceManager
+from yapapi import Golem
 from web3 import Web3
 
 from .erigon_service import Erigon
-from .erigon_service_wrapper import ErigonServiceWrapper
 
 if TYPE_CHECKING:
-    from typing import Optional, Mapping
-    from yapapi_service_manager import ServiceWrapper  # pylint: disable=C0412
+    from typing import Optional, MutableMapping
 
 
 class App(Quart):
     def __init__(self) -> None:
         super().__init__(__name__)
-        self.user_erigons: 'Mapping[str, Mapping[str, ServiceWrapper]]' = defaultdict(dict)
-        self.service_manager: 'Optional[ServiceManager]' = None
+        self.user_erigons: 'MutableMapping[str, MutableMapping[str, Erigon]]' = defaultdict(dict)
+        self.golem: 'Optional[Golem]' = None
         self.yapapi_executor_config: 'Optional[dict]' = None
 
 
@@ -29,12 +27,13 @@ cors(app)
 
 @app.before_serving
 async def start_service_manager():
-    app.service_manager = ServiceManager(app.yapapi_executor_config)
+    app.golem = Golem(**app.yapapi_executor_config)
+    await app.golem.start()
 
 
 @app.after_serving
 async def close_service_manager():
-    await app.service_manager.close()
+    await app.golem.stop()
 
 
 def abort_json_400(msg):
@@ -84,11 +83,17 @@ async def create_instance():
         return "'params' should be an object", 400
 
     #   Initialize erigon
-    erigon = app.service_manager.create_service(Erigon, (init_params,), ErigonServiceWrapper)
-    erigon.name = request_data.get('name', f'erigon_{erigon.id}')
+    cluster = await app.golem.run_service(Erigon, instance_params=[{
+        "name": request_data.get('name'),
+        "init_params": init_params
+    }])
+    try:
+        erigon = cluster.instances[0]
+    except IndexError:
+        return "service initialization failed", 500
 
     #   Save the data
-    app.user_erigons[user_id][erigon.id] = erigon
+    app.user_erigons[user_id][str(erigon.id)] = erigon
 
     return erigon.api_repr(), 201
 
@@ -100,8 +105,8 @@ async def stop_instance(erigon_id):
     try:
         erigon = app.user_erigons[user_id][erigon_id]
     except KeyError:
-        return 'Invalid erigon_id', 404
+        return 'invalid instance ID', 404
 
-    erigon.stop()
+    await erigon.stop()
 
     return erigon.api_repr(), 200

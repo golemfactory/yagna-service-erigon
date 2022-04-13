@@ -1,25 +1,28 @@
-import asyncio
 import json
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from yapapi.services import Service
+from yapapi.services import Service, ServiceState
 
 from .erigon_payload import ErigonPayload
 
 if TYPE_CHECKING:
-    from typing import List
+    from typing import List, Optional
     from yapapi.events import CommandExecuted
 
 
 class Erigon(Service):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, name: 'Optional[str]', init_params: 'Optional[dict]', *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.url = None
-        self.auth = None
-
+        self.url: 'Optional[str]' = None
+        self.auth: Optional['dict'] = None
+        self.name = name or f'erigon_{self.id}'
+        self.init_params = init_params
+        self.created_at = datetime.utcnow()
+        self.stopped_at: 'Optional[datetime]' = None
         #   NOTE: this is the network provider says it is running on, not the one
         #         requested (although these two should match)
-        self.network = None
+        self.eth_network: 'Optional[str]' = None
 
     @classmethod
     async def get_payload(cls):
@@ -27,20 +30,22 @@ class Erigon(Service):
 
     async def start(self):
         #   startup - set start args (network parameter)
-        self._ctx.deploy()
-        start_args = await self._get_start_args()
-        if start_args:
-            erigon_init_args = start_args[0]
-            erigon_init_args_str = json.dumps(erigon_init_args)
-            self._ctx.start(erigon_init_args_str)
+        await self._ctx.deploy()
+        if self.init_params:
+            await self._ctx.start(json.dumps(self.init_params))
         else:
-            self._ctx.start()
+            await self._ctx.start()
 
         #   Set url & auth
-        self._ctx.run('STATUS')
+        await self._ctx.run('STATUS')
         processing_future = yield self._ctx.commit()
         result = self._parse_status_result(processing_future.result())
-        self.url, self.auth, self.network = result['url'], result['auth'], result.get('network', 'mainnet')
+        self.url, self.auth, self.eth_network = result['url'], result['auth'], result.get('network', 'mainnet')
+
+    async def stop(self):
+        self.cluster.stop()
+        if self.stopped_at is None:
+            self.stopped_at = datetime.utcnow()
 
     @staticmethod
     def _parse_status_result(raw_data: 'List[CommandExecuted]'):
@@ -52,11 +57,19 @@ class Erigon(Service):
         erigon_data = json.loads(erigon_data)
         return erigon_data
 
-    async def _get_start_args(self):
-        #   TODO: this is part of the ugly start-passing-protocol & will change
-        #         when yapapi issue 372 is fixed
-        while True:
-            try:
-                return self._cluster.instance_start_args
-            except AttributeError:
-                await asyncio.sleep(0.1)
+    def api_repr(self):
+        data = {
+            'id': str(self.id),
+            'status': self.state.name,
+            'name': self.name,
+            'init_params': self.init_params,
+            'created_at': self.created_at.isoformat(),
+        }
+        if self.state is ServiceState.running:
+            data['url'] = self.url
+            data['auth'] = self.auth
+            data['network'] = self.eth_network
+        elif self.state is ServiceState.terminated:
+            data['stopped_at'] = self.stopped_at.isoformat()
+
+        return data
