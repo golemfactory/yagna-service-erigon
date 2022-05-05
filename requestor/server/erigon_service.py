@@ -7,7 +7,7 @@ from yapapi.services import Service, ServiceState
 from .erigon_payload import ErigonPayload
 
 if TYPE_CHECKING:
-    from typing import List, Optional
+    from typing import Optional
     from yapapi.events import CommandExecuted
 
 
@@ -30,16 +30,19 @@ class Erigon(Service):
 
     async def start(self):
         #   startup - set start args (network parameter)
-        await self._ctx.deploy()
+        script = self._ctx.new_script()
+        script.deploy()
         if self.init_params:
-            await self._ctx.start(json.dumps(self.init_params))
+            script.start(json.dumps(self.init_params))
         else:
-            await self._ctx.start()
+            script.start()
+        yield script
 
         #   Set url & auth
-        await self._ctx.run('STATUS')
-        processing_future = yield self._ctx.commit()
-        result = self._parse_status_result(processing_future.result())
+        script = self._ctx.new_script()
+        status = script.run('STATUS')
+        yield script
+        result = self._parse_status_result(await status)
         self.url, self.auth, self.eth_network = result['url'], result['auth'], result.get('network', 'mainnet')
 
     async def stop(self):
@@ -48,11 +51,7 @@ class Erigon(Service):
             self.stopped_at = datetime.utcnow()
 
     @staticmethod
-    def _parse_status_result(raw_data: 'List[CommandExecuted]'):
-        #   NOTE: raw_data contains also output from "start" and "deploy" for the first
-        #         request, and only single row for subsequent requests -> that's why -1 not 0
-        command_executed = raw_data[-1]
-
+    def _parse_status_result(command_executed: 'CommandExecuted'):
         erigon_data = command_executed.stdout or ''  # FIXME: Handle missing/invalid output
         erigon_data = json.loads(erigon_data)
         return erigon_data
@@ -70,6 +69,6 @@ class Erigon(Service):
             data['auth'] = self.auth
             data['network'] = self.eth_network
         elif self.state is ServiceState.terminated:
-            data['stopped_at'] = self.stopped_at.isoformat()
+            data['stopped_at'] = self.stopped_at.isoformat()  # FIXME: stopped_at could be None
 
         return data
