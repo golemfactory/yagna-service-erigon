@@ -9,6 +9,7 @@ services:
         image: erigon-server
         environment:
             - SUBNET_TAG=${SUBNET_TAG:-erigon}
+            - YAGNA_PAYMENT_DRIVER=${YAGNA_PAYMENT_DRIVER:-erc20}
         ports:
             - 5000:5000
         healthcheck:
