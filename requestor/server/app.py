@@ -10,7 +10,7 @@ from web3 import Web3
 from .erigon_service import Erigon
 
 if TYPE_CHECKING:
-    from typing import Optional, MutableMapping
+    from typing import Optional, MutableMapping, Dict, Any
 
 
 class App(Quart):
@@ -18,7 +18,9 @@ class App(Quart):
         super().__init__(__name__)
         self.user_erigons: 'MutableMapping[str, MutableMapping[str, Erigon]]' = defaultdict(dict)
         self.golem: 'Optional[Golem]' = None
-        self.yapapi_executor_config: 'Optional[dict]' = None
+
+        # It should be reconfigured before starting the app
+        self.yapapi_executor_config: 'Dict[str, Any]' = {'budget': 0}
 
 
 app = App()

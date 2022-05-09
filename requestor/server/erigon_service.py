@@ -15,7 +15,7 @@ class Erigon(Service):
     def __init__(self, name: 'Optional[str]', init_params: 'Optional[dict]', *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.url: 'Optional[str]' = None
-        self.auth: Optional['dict'] = None
+        self.auth: 'Optional[dict]' = None
         self.name = name or f'erigon_{self.id}'
         self.init_params = init_params
         self.created_at = datetime.utcnow()
