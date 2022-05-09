@@ -12,6 +12,8 @@ from .erigon_service import Erigon
 if TYPE_CHECKING:
     from typing import Optional, MutableMapping, Dict, Any
 
+MESSAGE_FOR_VALIDATION = 'Confirm the terms of use of the application'
+
 
 class App(Quart):
     def __init__(self) -> None:
@@ -60,6 +62,11 @@ def get_user_id():
         abort_json_400(f'{token} is not a correct address')
 
     return token
+
+
+def validate_massage(user_id: str, message: str) -> bool:
+    web3 = Web3.HTTPProvider()
+    return web3.eth.sing(user_id, text=MESSAGE_FOR_VALIDATION) == message
 
 
 @app.route('/getInstances', methods=['GET'])
