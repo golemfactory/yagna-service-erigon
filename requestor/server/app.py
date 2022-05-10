@@ -6,6 +6,9 @@ from quart import Quart, request, abort, jsonify
 from quart_cors import cors
 from yapapi import Golem
 from web3 import Web3
+from eth_account.datastructures import SignedMessage
+from eth_account.messages import encode_defunct
+from eth_account import Account
 
 from .erigon_service import Erigon
 
@@ -64,9 +67,10 @@ def get_user_id():
     return token
 
 
-def validate_massage(user_id: str, message: str) -> bool:
-    web3 = Web3.HTTPProvider()
-    return web3.eth.sing(user_id, text=MESSAGE_FOR_VALIDATION) == message
+def validate_massage(user_id: str, message: SignedMessage) -> bool:
+    original_message = encode_defunct(MESSAGE_FOR_VALIDATION)
+    recover_user_address = Account.recover_message(original_message, signature=message.signature)
+    return recover_user_address == user_id
 
 
 @app.route('/getInstances', methods=['GET'])
