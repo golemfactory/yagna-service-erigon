@@ -68,7 +68,7 @@ def get_user_id():
 
 
 def validate_massage(user_id: str, message: SignedMessage) -> bool:
-    original_message = encode_defunct(MESSAGE_FOR_VALIDATION)
+    original_message = encode_defunct(Web3.toBytes(text=MESSAGE_FOR_VALIDATION))
     recover_user_address = Account.recover_message(original_message, signature=message.signature)
     return recover_user_address == user_id
 
