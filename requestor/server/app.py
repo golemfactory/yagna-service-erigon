@@ -28,13 +28,13 @@ cors(app)
 
 
 @app.before_serving
-async def start_service_manager():
+async def start_golem():
     app.golem = Golem(**app.yapapi_executor_config)
     await app.golem.start()
 
 
 @app.after_serving
-async def close_service_manager():
+async def stop_golem():
     await app.golem.stop()
 
 
@@ -85,13 +85,14 @@ async def create_instance():
         return "'params' should be an object", 400
 
     #   Initialize erigon
-    cluster = await app.golem.run_service(Erigon, instance_params=[{
-        "name": request_data.get('name'),
-        "init_params": init_params
-    }])
     try:
+        cluster = await app.golem.run_service(Erigon, instance_params=[{
+            "name": request_data.get('name'),
+            "init_params": init_params
+        }])
         erigon = cluster.instances[0]
-    except IndexError:
+    except Exception:  # pylint: disable=broad-except
+        # TODO: Log error message
         return "service initialization failed", 500
 
     #   Save the data
