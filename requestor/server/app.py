@@ -15,8 +15,6 @@ from .erigon_service import Erigon
 if TYPE_CHECKING:
     from typing import Optional, MutableMapping, Dict, Any
 
-MESSAGE_FOR_VALIDATION = 'Confirm the terms of use of the application'
-
 
 class App(Quart):
     def __init__(self) -> None:
@@ -67,8 +65,8 @@ def get_user_id():
     return token
 
 
-def validate_massage(user_id: str, message: SignedMessage) -> bool:
-    original_message = encode_defunct(Web3.toBytes(text=MESSAGE_FOR_VALIDATION))
+def validate_massage(user_id: str, message: SignedMessage, original: str) -> bool:
+    original_message = encode_defunct(Web3.toBytes(text=original))
     recover_user_address = Account.recover_message(original_message, signature=message.signature)
     return recover_user_address == user_id
 
