@@ -6,9 +6,7 @@ from quart import Quart, request, abort, jsonify
 from quart_cors import cors
 from yapapi import Golem
 from web3 import Web3
-from eth_account.datastructures import SignedMessage
-from eth_account.messages import encode_defunct
-from eth_account import Account
+
 
 from .erigon_service import Erigon
 
@@ -63,12 +61,6 @@ def get_user_id():
         abort_json_400(f'{token} is not a correct address')
 
     return token
-
-
-def validate_massage(user_id: str, message: SignedMessage, original: str) -> bool:
-    original_message = encode_defunct(Web3.toBytes(text=original))
-    recover_user_address = Account.recover_message(original_message, signature=message.signature)
-    return recover_user_address == user_id
 
 
 @app.route('/getInstances', methods=['GET'])
