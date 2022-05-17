@@ -7,6 +7,7 @@ from quart_cors import cors
 from yapapi import Golem
 from web3 import Web3
 
+
 from .erigon_service import Erigon
 
 if TYPE_CHECKING:

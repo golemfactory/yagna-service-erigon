@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 class Erigon(Service):
     def __init__(self, name: 'Optional[str]', init_params: 'Optional[dict]', *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)  # type: ignore
         self.url: 'Optional[str]' = None
         self.auth: 'Optional[dict]' = None
         self.name = name or f'erigon_{self.id}'
