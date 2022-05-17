@@ -5,11 +5,9 @@ from requestor.utils import validate_massage
 
 
 class MessageVerificationTestCase(TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.user_private_key: bytes = b"\xb2\\}\xb3\x1f\xee\xd9\x12''\xbf\t9\xdcv\x9a\x96VK-\xe4\xc4rm\x03[6\xec\xf1\xe5\xb3d"
-        cls.message: str = 'First Message'
-        cls.message2: str = 'Second Message'
+    user_private_key: bytes = b"\xb2\\}\xb3\x1f\xee\xd9\x12''\xbf\t9\xdcv\x9a\x96VK-\xe4\xc4rm\x03[6\xec\xf1\xe5\xb3d"
+    message: str = 'First Message'
+    message2: str = 'Second Message'
 
     def test_correct_validation(self):
         message = encode_defunct(text=self.message)

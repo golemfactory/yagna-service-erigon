@@ -1,6 +1,6 @@
 import os
 
-from server.app import app
+from .server.app import app
 
 app.yapapi_executor_config = {
     #   NOTE: budget == 10 is not enough to make it run for long
