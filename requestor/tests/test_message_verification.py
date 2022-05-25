@@ -13,9 +13,17 @@ class MessageVerificationTestCase(TestCase):
     def test_correct_validation(self):
         message = encode_defunct(text=self.message)
         signed_message = self.account.sign_message(signable_message=message, private_key=self.user_private_key)
-        self.assertTrue(validate_massage('0x5ce9454909639D2D17A3F753ce7d93fa0b9aB12E', signed_message, self.message))
+        self.assertTrue(validate_massage(
+            '0x5ce9454909639D2D17A3F753ce7d93fa0b9aB12E',
+            signed_message.signature,
+            self.message
+        ))
 
     def test_invalid_validation(self):
         message = encode_defunct(text=self.message2)
         signed_message = self.account.sign_message(signable_message=message, private_key=self.user_private_key)
-        self.assertFalse(validate_massage('0x5ce9454909639D2D17A3F753ce7d93fa0b9aB12E', signed_message, self.message))
+        self.assertFalse(validate_massage(
+            '0x5ce9454909639D2D17A3F753ce7d93fa0b9aB12E',
+            signed_message.signature,
+            self.message
+        ))

@@ -1,6 +1,8 @@
 from collections import defaultdict
 import json
 from typing import TYPE_CHECKING
+from eth_account.messages import encode_defunct
+from eth_account.datastructures import HexBytes
 
 from quart import Quart, request, abort, jsonify
 from quart_cors import cors
@@ -9,6 +11,9 @@ from web3 import Web3
 
 
 from .erigon_service import Erigon
+from ..utils import generate_message, validate_massage
+
+MESSAGE_VALIDATION = False
 
 if TYPE_CHECKING:
     from typing import Optional, MutableMapping, Dict, Any
@@ -63,9 +68,24 @@ def get_user_id():
     return token
 
 
+def validate_message(user_id: str) -> None:
+    try:
+        signature = HexBytes(request.headers['Signature'])
+    except KeyError:
+        abort_json_400('Missing signature header')
+    try:
+        message = request.headers['Message']
+    except KeyError:
+        abort_json_400('Missing message header')
+    if not validate_massage(user_id, signature, message):
+        abort_json_400(f'Invalid signature')
+
+
 @app.route('/getInstances', methods=['GET'])
 async def get_instances():
     user_id = get_user_id()
+    if MESSAGE_VALIDATION:
+        validate_message(user_id)
     erigons = app.user_erigons[user_id].values()
     data = [erigon.api_repr() for erigon in erigons]
     return json.dumps(data), 200
@@ -114,3 +134,8 @@ async def stop_instance(erigon_id):
     await erigon.stop()
 
     return erigon.api_repr(), 200
+
+
+@app.route('/getMessage', methods=['GET'])
+async def get_message():
+    return json.dumps(generate_message(20)), 200
