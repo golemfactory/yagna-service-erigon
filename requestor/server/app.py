@@ -1,7 +1,6 @@
 from collections import defaultdict
 import json
 from typing import TYPE_CHECKING
-from eth_account.messages import encode_defunct
 from eth_account.datastructures import HexBytes
 
 from quart import Quart, request, abort, jsonify
@@ -78,7 +77,7 @@ def validate_message(user_id: str) -> None:
     except KeyError:
         abort_json_400('Missing message header')
     if not validate_massage(user_id, signature, message):
-        abort_json_400(f'Invalid signature')
+        abort_json_400('Invalid signature')
 
 
 @app.route('/getInstances', methods=['GET'])
