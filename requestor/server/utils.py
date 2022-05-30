@@ -8,10 +8,14 @@ from web3 import Web3
 
 MESSAGE_FOR_VALIDATION = 'Confirm the terms of use of the application: {}'
 
+def hash_personal_message(msg):
+    padded = "\x19Ethereum Signed Message:\n" + str(len(msg)) + msg
+    return sha3.keccak_256(bytes(padded, 'utf8')).digest()
 
 def validate_massage(user_id: str, signature: HexBytes, original: str) -> bool:
     original_message = encode_defunct(Web3.toBytes(text=original))
     recover_user_address = Account.recover_message(original_message, signature=signature)
+
     return recover_user_address == user_id
 
 

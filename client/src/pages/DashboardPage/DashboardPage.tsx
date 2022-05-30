@@ -14,7 +14,7 @@ const DashboardPage = () => {
 
   const nodeForm = useToggle({});
 
-  const { account } = useMetamask();
+  const { account, authTicket } = useMetamask();
 
   const handleError = () => {
     setNodes(initialState);
@@ -23,7 +23,7 @@ const DashboardPage = () => {
 
   const handleFetchNodes = useCallback(
     async () =>
-      await httpRequest({ method: 'get', path: 'getInstances', account })
+      await httpRequest({ method: 'get', path: 'getInstances', authTicket })
         .then((instances: NodeProps[]) =>
           setNodes({
             active: orderBy(
@@ -39,7 +39,7 @@ const DashboardPage = () => {
           }),
         )
         .catch(handleError),
-    [account],
+    [account, authTicket],
   );
 
   useEffect(() => {
@@ -57,13 +57,13 @@ const DashboardPage = () => {
   const handleStartNode = ({ name, network }: NodeFormData) => {
     nodeForm.toggleOpen && nodeForm.toggleClick();
 
-    httpRequest({ path: 'createInstance', account, data: { name, params: { network } } })
+    httpRequest({ path: 'createInstance', data: { name, params: { network } } })
       .then(() => handleFetchNodes())
       .catch(handleError);
   };
 
   const handleStopNode = (id: string) =>
-    httpRequest({ path: 'stopInstance', id, account })
+    httpRequest({ path: 'stopInstance', id })
       .then(() =>
         setNodes({
           active: active.map((node: NodeProps) => (node.id === id ? { ...node, status: status.stopping } : node)),
