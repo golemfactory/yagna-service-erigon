@@ -10,9 +10,9 @@ from web3 import Web3
 
 
 from .erigon_service import Erigon
-from ..utils import generate_message, validate_massage
+from .utils import generate_message, validate_massage
 
-MESSAGE_VALIDATION = False
+MESSAGE_VALIDATION = True
 
 if TYPE_CHECKING:
     from typing import Optional, MutableMapping, Dict, Any
@@ -21,11 +21,11 @@ if TYPE_CHECKING:
 class App(Quart):
     def __init__(self) -> None:
         super().__init__(__name__)
-        self.user_erigons: 'MutableMapping[str, MutableMapping[str, Erigon]]' = defaultdict(dict)
-        self.golem: 'Optional[Golem]' = None
+        self.user_erigons: "MutableMapping[str, MutableMapping[str, Erigon]]" = defaultdict(dict)
+        self.golem: "Optional[Golem]" = None
 
         # It should be reconfigured before starting the app
-        self.yapapi_executor_config: 'Dict[str, Any]' = {'budget': 0}
+        self.yapapi_executor_config: "Dict[str, Any]" = {"budget": 0}
 
 
 app = App()
@@ -44,7 +44,7 @@ async def stop_golem():
 
 
 def abort_json_400(msg):
-    data = {'msg': msg}
+    data = {"msg": msg}
     response = jsonify(data)
     response.status_code = 400
     abort(response)
@@ -52,9 +52,9 @@ def abort_json_400(msg):
 
 def get_user_id():
     try:
-        auth = request.headers['Authorization']
+        auth = request.headers["Authorization"]
     except KeyError:
-        abort_json_400('Missing authorization header')
+        abort_json_400("Missing authorization header")
 
     if auth.startswith("Bearer "):
         token = auth[7:]
@@ -62,25 +62,25 @@ def get_user_id():
         abort_json_400('Authorization header should start with "Bearer "')
 
     if not Web3.isAddress(token):
-        abort_json_400(f'{token} is not a correct address')
+        abort_json_400(f"{token} is not a correct address")
 
     return token
 
 
 def validate_message(user_id: str) -> None:
     try:
-        signature = HexBytes(request.headers['Signature'])
+        signature = HexBytes(request.headers["Signature"])
     except KeyError:
-        abort_json_400('Missing signature header')
+        abort_json_400("Missing signature header")
     try:
-        message = request.headers['Message']
+        message = request.headers["Message"]
     except KeyError:
-        abort_json_400('Missing message header')
+        abort_json_400("Missing message header")
     if not validate_massage(user_id, signature, message):
-        abort_json_400('Invalid signature')
+        abort_json_400("Invalid signature")
 
 
-@app.route('/getInstances', methods=['GET'])
+@app.route("/getInstances", methods=["GET"])
 async def get_instances():
     user_id = get_user_id()
     if MESSAGE_VALIDATION:
@@ -90,14 +90,14 @@ async def get_instances():
     return json.dumps(data), 200
 
 
-@app.route('/createInstance', methods=['POST'])
+@app.route("/createInstance", methods=["POST"])
 async def create_instance():
     user_id = get_user_id()
 
     #   Get init params from request
     request_data = await request.json
     try:
-        init_params = request_data['params']
+        init_params = request_data["params"]
     except KeyError:
         return "'params' key is required", 400
 
@@ -106,10 +106,10 @@ async def create_instance():
 
     #   Initialize erigon
     try:
-        cluster = await app.golem.run_service(Erigon, instance_params=[{
-            "name": request_data.get('name'),
-            "init_params": init_params
-        }])
+        cluster = await app.golem.run_service(
+            Erigon,
+            instance_params=[{"name": request_data.get("name"), "init_params": init_params}],
+        )
         erigon = cluster.instances[0]
     except Exception:  # pylint: disable=broad-except
         # TODO: Log error message
@@ -121,20 +121,20 @@ async def create_instance():
     return erigon.api_repr(), 201
 
 
-@app.route('/stopInstance/<erigon_id>', methods=['POST'])
+@app.route("/stopInstance/<erigon_id>", methods=["POST"])
 async def stop_instance(erigon_id):
     user_id = get_user_id()
 
     try:
         erigon = app.user_erigons[user_id][erigon_id]
     except KeyError:
-        return 'invalid instance ID', 404
+        return "invalid instance ID", 404
 
     await erigon.stop()
 
     return erigon.api_repr(), 200
 
 
-@app.route('/getMessage', methods=['GET'])
+@app.route("/getMessage", methods=["GET"])
 async def get_message():
     return json.dumps(generate_message(20)), 200

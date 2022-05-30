@@ -1,7 +1,7 @@
 from unittest import TestCase
 from eth_account.messages import encode_defunct
 from eth_account import Account
-from requestor.utils import validate_massage
+from requestor.server.utils import validate_massage
 
 
 class MessageVerificationTestCase(TestCase):
