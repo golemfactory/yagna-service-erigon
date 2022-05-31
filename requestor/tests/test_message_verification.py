@@ -1,8 +1,9 @@
-import requests
 from unittest import TestCase
 from eth_account.messages import encode_defunct
 from eth_account import Account
-from requestor.utils import validate_massage
+import requests
+
+from requestor.server.utils import validate_massage
 
 
 class MessageVerificationTestCase(TestCase):
@@ -31,8 +32,8 @@ class MessageVerificationTestCase(TestCase):
 
     def test_api_correct_call(self):
         account = Account.create('TEST ACCOUNT')
-        r = requests.get('http://localhost:8000/getMessage')
-        message = r.json()
+        response = requests.get('http://localhost:8000/getMessage')
+        message = response.json()
         encode_message = encode_defunct(text=message)
         signed_message = account.sign_message(signable_message=encode_message)
         self.assertTrue(validate_massage(
@@ -42,5 +43,5 @@ class MessageVerificationTestCase(TestCase):
         ))
 
     def test_api_incorrect_call(self):
-        r = requests.post('http://localhost:8000/getMessage')
-        self.assertTrue(r.status_code == 405)
+        response = requests.post('http://localhost:8000/getMessage')
+        self.assertTrue(response.status_code == 405)

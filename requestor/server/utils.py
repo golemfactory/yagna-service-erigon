@@ -10,8 +10,9 @@ MESSAGE_FOR_VALIDATION = 'Confirm the terms of use of the application: {}'
 
 
 def validate_massage(user_id: str, signature: HexBytes, original: str) -> bool:
+    account = Account()
     original_message = encode_defunct(Web3.toBytes(text=original))
-    recover_user_address = Account.recover_message(original_message, signature=signature)
+    recover_user_address = account.recover_message(signable_message=original_message, signature=signature)
     return recover_user_address == user_id
 
 

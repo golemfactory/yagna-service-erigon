@@ -10,7 +10,7 @@ from web3 import Web3
 
 
 from .erigon_service import Erigon
-from ..utils import generate_message, validate_massage
+from .utils import validate_massage, generate_message
 
 MESSAGE_VALIDATION = False
 
