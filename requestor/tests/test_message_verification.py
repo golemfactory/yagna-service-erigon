@@ -1,3 +1,4 @@
+import requests
 from unittest import TestCase
 from eth_account.messages import encode_defunct
 from eth_account import Account
@@ -27,3 +28,19 @@ class MessageVerificationTestCase(TestCase):
             signed_message.signature,
             self.message
         ))
+
+    def test_api_correct_call(self):
+        account = Account.create('TEST ACCOUNT')
+        r = requests.get('http://localhost:8000/getMessage')
+        message = r.json()
+        encode_message = encode_defunct(text=message)
+        signed_message = account.sign_message(signable_message=encode_message)
+        self.assertTrue(validate_massage(
+            account.address,
+            signed_message.signature,
+            message
+        ))
+
+    def test_api_incorrect_call(self):
+        r = requests.post('http://localhost:8000/getMessage')
+        self.assertTrue(r.status_code == 405)
