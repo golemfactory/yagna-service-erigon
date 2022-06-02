@@ -3,7 +3,7 @@ import { useWeb3React } from '@web3-react/core';
 import { InjectedConnector } from '@web3-react/injected-connector';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { isNull } from 'lodash';
-import { AuthTicket } from '../../utils/httpRequest/httpRequest';
+import { AuthTicket, AUTH_INIT, AUTH_PENDING } from '../../utils/httpRequest/httpRequest';
 import httpRequest from '../../utils/httpRequest/httpRequest';
 
 const injected = new InjectedConnector({
@@ -30,16 +30,15 @@ export const useMetamask = () => {
     setMetamask(library && library.givenProvider.isMetaMask);
   }, [library]);
 
-  const initState: AuthTicket = { status: 'init' };
-  const [authTicket, setAuthTicket] = useState(initState);
+  const [authTicket, setAuthTicket] = useState(AUTH_INIT);
   useEffect(() => {
     if (active && library && library.givenProvider.isMetaMask) {
       if (authTicket.status !== 'pending') {
-        setAuthTicket({status: 'pending'});
-        httpRequest({method: 'get', path: 'getMessage'}).then(async (message) => {
+        setAuthTicket(AUTH_PENDING);
+        httpRequest({ method: 'get', path: 'getMessage' }).then(async (message) => {
           const response = await library.eth.personal.sign(library.utils.toHex(message), account);
           console.log('p=', library.givenProvider);
-          setAuthTicket({ status: 'authorized', challenge: message, response, account });
+          setAuthTicket({ status: 'authorized', challenge: message, response, account: account! });
         });
       }
     }

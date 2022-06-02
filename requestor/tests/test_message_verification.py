@@ -10,6 +10,18 @@ class MessageVerificationTestCase(TestCase):
     message2: str = 'Second Message'
     account: Account = Account()
 
+    def test_ui_validation(self):
+        message = "Confirm the terms of use of the application: 856K0T54O7A39NEZCRB2"
+        message2 = "BleConfirm the terms of use of the application: 856K0T54O7A39NEZCRB2"
+        signature = "0x1caa8e03e27eaee3a17ec3f4483dec478c618dedbca9447c5f5c59e4a69cc9914519fc9e98bd2eec56c3b4695603eb13101073c81f123e6899738d590f00aa8b1b";
+        self.assertTrue(
+            validate_massage('0x226aC45F7145C73331B721F3229AFdBEC470D724',
+            signature, message))
+        self.assertFalse(
+            validate_massage('0x226aC45F7145C73331B721F3229AFdBEC470D724',
+                             signature, message2))
+
+
     def test_correct_validation(self):
         message = encode_defunct(text=self.message)
         signed_message = self.account.sign_message(signable_message=message, private_key=self.user_private_key)
