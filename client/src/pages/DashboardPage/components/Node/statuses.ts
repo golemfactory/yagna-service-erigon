@@ -1,3 +1,5 @@
+/*eslint no-unused-vars: "off"*/
+
 export enum status {
   pending = 'pending',
   starting = 'starting',

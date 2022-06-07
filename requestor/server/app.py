@@ -11,8 +11,8 @@ from web3 import Web3
 
 from .erigon_service import Erigon
 from .utils import generate_message, validate_massage
+from .settings import MESSAGE_VALIDATION
 
-MESSAGE_VALIDATION = True
 
 if TYPE_CHECKING:
     from typing import Optional, MutableMapping, Dict, Any

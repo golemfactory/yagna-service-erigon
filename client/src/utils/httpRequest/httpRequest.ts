@@ -26,7 +26,6 @@ export type Request = {
 
 export default async function httpRequest({ method = 'post', path, id = '', authTicket, data }: Request) {
   let base = request(method!.toUpperCase(), url({ path, id })).accept('application/json').set('X-Api-Call', '1');
-  console.log('auth=', authTicket);
   if (authTicket && authTicket.status === 'authorized') {
     base = base.set({
       Message: authTicket.challenge.toString(),

@@ -3,14 +3,19 @@ import { useWeb3React } from '@web3-react/core';
 import { InjectedConnector } from '@web3-react/injected-connector';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { isNull } from 'lodash';
-import { AuthTicket, AUTH_INIT, AUTH_PENDING } from '../../utils/httpRequest/httpRequest';
-import httpRequest from '../../utils/httpRequest/httpRequest';
+import { AUTH_INIT, AUTH_PENDING, AuthTicket } from '../../utils/httpRequest/httpRequest';
+import { auth } from '../../utils/auth';
 
 const injected = new InjectedConnector({
   supportedChainIds: [1, 3, 42, 4, 5],
 });
 
-export const useMetamask = () => {
+export const useMetamask = (): {
+  account: string | null | undefined;
+  active: boolean;
+  metamask: any;
+  authTicket: AuthTicket;
+} => {
   const { account, active, activate, library } = useWeb3React();
   const [metamask, setMetamask] = useState(library && library.givenProvider.isMetaMask);
 
@@ -35,14 +40,17 @@ export const useMetamask = () => {
     if (active && library && library.givenProvider.isMetaMask) {
       if (authTicket.status !== 'pending') {
         setAuthTicket(AUTH_PENDING);
-        httpRequest({ method: 'get', path: 'getMessage' }).then(async (message) => {
+        auth(async (message) => {
           const response = await library.eth.personal.sign(library.utils.toHex(message), account);
-          console.log('p=', library.givenProvider);
-          setAuthTicket({ status: 'authorized', challenge: message, response, account: account! });
-        });
+          return response;
+        })
+          .then(({ message, response }) =>
+            setAuthTicket({ status: 'authorized', challenge: message, response, account: account! }),
+          )
+          .catch(() => setAuthTicket(AUTH_INIT));
       }
     }
-  }, [library, active]);
+  }, [library, active, account, authTicket.status]);
 
   // @ts-ignore
   const cypress = window.Cypress;
