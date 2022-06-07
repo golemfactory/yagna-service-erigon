@@ -88,3 +88,49 @@ export const StyledPlaceholder = styled.div`
     border-radius: 50%;
   }
 `;
+
+export const PendingPlaceholder = styled.div`
+  ${MetamaskButtonMixin(30)};
+
+  position: relative;
+
+  color: ${color.grey};
+  border-color: transparent;
+
+  :before {
+    content: '';
+
+    width: 1.2rem;
+    height: 1.2rem;
+
+    position: absolute;
+    top: 1.8rem;
+    left: 9.2rem;
+
+    background-color: ${color.red};
+    border-radius: 50%;
+  }
+`;
+
+export const ErrorPlaceholder = styled.div`
+  ${MetamaskButtonMixin(30)};
+
+  position: relative;
+
+  color: ${color.red};
+  border-color: transparent;
+
+  :before {
+    content: '';
+
+    width: 1.2rem;
+    height: 1.2rem;
+
+    position: absolute;
+    top: 1.8rem;
+    left: 9.2rem;
+
+    background-color: ${color.red};
+    border-radius: 50%;
+  }
+`;

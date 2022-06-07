@@ -6,16 +6,21 @@ import GlobalStyle from 'styles/global';
 import 'fonts/font-face.css';
 
 const App = () => {
-  const { active, metamask } = useMetamask();
+  const { active, metamask, authTicket } = useMetamask();
 
   const handleNotify = () => notify(<Toast code={-32002} />);
 
   return (
     <>
       <GlobalStyle />
-      <Header metamask={metamask} active={active} onNotify={handleNotify} />
+      <Header
+        metamask={metamask}
+        active={active && authTicket.status !== 'init'}
+        onNotify={handleNotify}
+        authTicket={authTicket}
+      />
       <ToastContainer hideProgressBar />
-      {active ? <DashboardPage /> : <ProductPage onNotify={handleNotify} />}
+      {active && authTicket.status === 'authorized' ? <DashboardPage /> : <ProductPage onNotify={handleNotify} />}
       <Footer />
     </>
   );

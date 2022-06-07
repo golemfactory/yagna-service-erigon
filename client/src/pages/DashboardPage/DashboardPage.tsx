@@ -14,7 +14,7 @@ const DashboardPage = () => {
 
   const nodeForm = useToggle({});
 
-  const { account } = useMetamask();
+  const { account, authTicket } = useMetamask();
 
   const handleError = () => {
     setNodes(initialState);
@@ -23,23 +23,25 @@ const DashboardPage = () => {
 
   const handleFetchNodes = useCallback(
     async () =>
-      await httpRequest({ method: 'get', path: 'getInstances', account })
-        .then((instances: NodeProps[]) =>
-          setNodes({
-            active: orderBy(
-              instances.filter((instance: NodeProps) => instance.status !== status.stopped),
-              'created_at',
-              'desc',
-            ),
-            stopped: orderBy(
-              instances.filter((instance: NodeProps) => instance.status === status.stopped),
-              'stopped_at',
-              'desc',
-            ),
-          }),
-        )
-        .catch(handleError),
-    [account],
+      authTicket.status === 'authorized'
+        ? await httpRequest({ method: 'get', path: 'getInstances', authTicket })
+            .then((instances: NodeProps[]) =>
+              setNodes({
+                active: orderBy(
+                  instances.filter((instance: NodeProps) => instance.status !== status.stopped),
+                  'created_at',
+                  'desc',
+                ),
+                stopped: orderBy(
+                  instances.filter((instance: NodeProps) => instance.status === status.stopped),
+                  'stopped_at',
+                  'desc',
+                ),
+              }),
+            )
+            .catch(handleError)
+        : null,
+    [account, authTicket],
   );
 
   useEffect(() => {
@@ -57,13 +59,13 @@ const DashboardPage = () => {
   const handleStartNode = ({ name, network }: NodeFormData) => {
     nodeForm.toggleOpen && nodeForm.toggleClick();
 
-    httpRequest({ path: 'createInstance', account, data: { name, params: { network } } })
+    httpRequest({ path: 'createInstance', data: { name, params: { network } }, authTicket })
       .then(() => handleFetchNodes())
       .catch(handleError);
   };
 
   const handleStopNode = (id: string) =>
-    httpRequest({ path: 'stopInstance', id, account })
+    httpRequest({ path: 'stopInstance', id, authTicket })
       .then(() =>
         setNodes({
           active: active.map((node: NodeProps) => (node.id === id ? { ...node, status: status.stopping } : node)),
@@ -74,7 +76,11 @@ const DashboardPage = () => {
 
   return (
     <Layout>
-      {nodeForm.toggleOpen ? (
+      {authTicket.status === 'pending' ? (
+        <StyledParagraph>Authorization pending. Sing message in metamask.</StyledParagraph>
+      ) : authTicket.status === 'init' ? (
+        <StyledParagraph>Unauthorized.</StyledParagraph>
+      ) : nodeForm.toggleOpen ? (
         <NodeForm onSubmit={handleStartNode}>
           <Button label="Cancel" onClick={nodeForm.toggleClick} ghost />
         </NodeForm>
@@ -84,7 +90,7 @@ const DashboardPage = () => {
           button={<StyledButton label="Run new node" onClick={nodeForm.toggleClick} outlined />}
         >
           <TabPanel>
-            {!!active.length ? (
+            {active.length ? (
               active.map((node: NodeProps) => (
                 <Node key={node.id} node={node}>
                   <Button label="Stop node" onClick={() => handleStopNode(node.id)} />
@@ -97,7 +103,7 @@ const DashboardPage = () => {
             )}
           </TabPanel>
           <TabPanel>
-            {!!stopped.length ? (
+            {stopped.length ? (
               stopped.map((node: NodeProps) => <Node key={node.id} node={node} />)
             ) : (
               <StyledParagraph style={{ margin: '8rem 0' }}>

@@ -34,8 +34,7 @@ jobs:
           pip install -r test-requirements.txt
       - name: Run mypy
         run: |
-          cd ..
           mkdir .mypy_cache
-          mypy --install-types --non-interactive requestor
+          mypy --install-types --non-interactive run_server.py
       - name: Run pylint
         run: pylint **/*.py

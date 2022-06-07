@@ -29,3 +29,6 @@ yarn-error.log*
 ya-runtime-erigon/*.tar.gz
 
 keystore.json
+requestor/venv/
+.idea/
+
