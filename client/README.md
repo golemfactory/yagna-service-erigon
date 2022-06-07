@@ -31,11 +31,15 @@ $ docker-compose up --exit-code-from cypress
 It will run headless test in docker, based on the main dockerfile.
 
 To run test locally, run client and requestor and then:
+
 - For headless mode:
+
 ```
 $ yarn test:run
 ```
+
 - For browser mode:
+
 ```
 $ yarn test:open
 ```

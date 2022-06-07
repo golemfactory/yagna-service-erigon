@@ -6,7 +6,7 @@ from eth_account.datastructures import HexBytes
 from eth_account.messages import encode_defunct
 from web3 import Web3
 
-MESSAGE_FOR_VALIDATION = 'Confirm the terms of use of the application: {}'
+from .settings import MESSAGE_FOR_VALIDATION
 
 
 def validate_massage(user_id: str, signature: HexBytes, original: str) -> bool:
