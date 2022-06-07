@@ -13,9 +13,14 @@ const App = () => {
   return (
     <>
       <GlobalStyle />
-      <Header metamask={metamask} active={active && authTicket.status !== 'init'} onNotify={handleNotify} />
+      <Header
+        metamask={metamask}
+        active={active && authTicket.status !== 'init'}
+        onNotify={handleNotify}
+        authTicket={authTicket}
+      />
       <ToastContainer hideProgressBar />
-      {active && authTicket.status !== 'init' ? <DashboardPage /> : <ProductPage onNotify={handleNotify} />}
+      {active && authTicket.status === 'authorized' ? <DashboardPage /> : <ProductPage onNotify={handleNotify} />}
       <Footer />
     </>
   );

@@ -7,7 +7,7 @@ import { AUTH_INIT, AUTH_PENDING, AuthTicket } from '../../utils/httpRequest/htt
 import { auth } from '../../utils/auth';
 
 const injected = new InjectedConnector({
-  supportedChainIds: [1, 3, 42, 4, 5],
+  supportedChainIds: [1, 3, 42, 4, 5, 137],
 });
 
 export const useMetamask = (): {
@@ -38,19 +38,22 @@ export const useMetamask = (): {
   const [authTicket, setAuthTicket] = useState(AUTH_INIT);
   useEffect(() => {
     if (active && library && library.givenProvider.isMetaMask) {
-      if (authTicket.status !== 'pending') {
+      if (
+        typeof account === 'string' &&
+        (authTicket.status === 'init' || (authTicket.status === 'authorized' && authTicket.account != account))
+      ) {
         setAuthTicket(AUTH_PENDING);
-        auth(async (message) => {
+        auth(account, async (message) => {
           const response = await library.eth.personal.sign(library.utils.toHex(message), account);
           return response;
         })
           .then(({ message, response }) =>
             setAuthTicket({ status: 'authorized', challenge: message, response, account: account! }),
           )
-          .catch(() => setAuthTicket(AUTH_INIT));
+          .catch((error) => setAuthTicket({ status: 'error', error }));
       }
     }
-  }, [library, active, account, authTicket.status]);
+  }, [library, active, account]);
 
   // @ts-ignore
   const cypress = window.Cypress;

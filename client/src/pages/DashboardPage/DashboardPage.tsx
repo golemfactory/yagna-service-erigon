@@ -41,7 +41,7 @@ const DashboardPage = () => {
             )
             .catch(handleError)
         : null,
-    [account, authTicket, handleError],
+    [account, authTicket],
   );
 
   useEffect(() => {
@@ -59,13 +59,13 @@ const DashboardPage = () => {
   const handleStartNode = ({ name, network }: NodeFormData) => {
     nodeForm.toggleOpen && nodeForm.toggleClick();
 
-    httpRequest({ path: 'createInstance', data: { name, params: { network } } })
+    httpRequest({ path: 'createInstance', data: { name, params: { network } }, authTicket })
       .then(() => handleFetchNodes())
       .catch(handleError);
   };
 
   const handleStopNode = (id: string) =>
-    httpRequest({ path: 'stopInstance', id })
+    httpRequest({ path: 'stopInstance', id, authTicket })
       .then(() =>
         setNodes({
           active: active.map((node: NodeProps) => (node.id === id ? { ...node, status: status.stopping } : node)),
